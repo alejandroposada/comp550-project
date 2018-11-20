@@ -96,3 +96,6 @@ For obtaining samples and interpolating between senteces, inference.py can be us
 python3 inference.py -c $CHECKPOINT -n $NUM_SAMPLES
 ```
 
+
+**Code**
++ https://colab.research.google.com/notebooks/latent_constraints/latentconstraints.ipynb#scrollTo=948GFxky-F7I
