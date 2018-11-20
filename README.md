@@ -14,3 +14,6 @@ comp550-project
 + [CS224n NLP Assignment](http://web.stanford.edu/class/cs224n/project.html)
 + [CS224n NLP Reports](https://web.stanford.edu/class/archive/cs/cs224n/cs224n.1174/reports.html)
 
+
+**Code**
++ https://colab.research.google.com/notebooks/latent_constraints/latentconstraints.ipynb#scrollTo=948GFxky-F7I
