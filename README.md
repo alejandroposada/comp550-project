@@ -99,3 +99,5 @@ python3 inference.py -c $CHECKPOINT -n $NUM_SAMPLES
 
 **Code**
 + https://colab.research.google.com/notebooks/latent_constraints/latentconstraints.ipynb#scrollTo=948GFxky-F7I
++ https://github.com/cheonbok94/Pytorch-Latent-Constraints-Learning-to-Generate-Conditionally-from-Unconditional-Generative-Models
++ https://github.com/timbmg/Sentence-VAE?fbclid=IwAR2G5O7Lf729Zu8od_AFKk-pDQQ5zc_v22BrwuIZxUZvVEKvCrQ3X6eWG18
