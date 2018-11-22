@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import json
 import time
@@ -19,6 +21,8 @@ def main(args):
 
     splits = ['train', 'valid'] + (['test'] if args.test else [])
 
+    # generates a data structure
+    # single examples can be investigated via: datasets['train'][100]
     datasets = OrderedDict()
     for split in splits:
         datasets[split] = PTB(
@@ -72,7 +76,7 @@ def main(args):
         # cut-off unnecessary padding from target, and flatten
         target = target[:, :torch.max(length).data[0]].contiguous().view(-1)
         logp = logp.view(-1, logp.size(2))
-        
+
         # Negative Log Likelihood
         NLL_loss = NLL(logp, target)
 
@@ -132,7 +136,8 @@ def main(args):
 
 
                 # bookkeepeing
-                tracker['ELBO'] = torch.cat((tracker['ELBO'], loss.data))
+                import IPython; IPython.embed()
+                tracker['ELBO'] = torch.cat((tracker['ELBO'], loss.data.view(1)), dim=0)
 
                 if args.tensorboard_logging:
                     writer.add_scalar("%s/ELBO"%split.upper(), loss.data[0], epoch*len(data_loader) + iteration)
@@ -212,3 +217,5 @@ if __name__ == '__main__':
     assert 0 <= args.word_dropout <= 1
 
     main(args)
+
+
