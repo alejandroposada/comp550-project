@@ -5,7 +5,8 @@ import torch
 import numpy as np
 from collections import defaultdict
 from torch.utils.data import Dataset
-from nltk.tokenize import TweetTokenizer
+#import nltk
+#from nltk.tokenize import TweetTokenizer
 
 from utils import OrderedCounter
 
@@ -43,7 +44,9 @@ class PTB(Dataset):
 
         return {
             'input': np.asarray(self.data[idx]['input']),
+            'input_str': self._get_str(self.data[idx]['input']),
             'target': np.asarray(self.data[idx]['target']),
+            'target_str': self._get_str(self.data[idx]['target']),
             'length': self.data[idx]['length']
         }
 
@@ -75,13 +78,23 @@ class PTB(Dataset):
 
 
     def _load_data(self, vocab=True):
-
+        """loads data from a saves .json file, with or without a matching vocab"""
         with open(os.path.join(self.data_dir, self.data_file), 'r') as file:
             self.data = json.load(file)
         if vocab:
             with open(os.path.join(self.data_dir, self.vocab_file), 'r') as file:
                 vocab = json.load(file)
             self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
+
+
+    def _get_str(self, idx_list):
+        """for a given idx_list, uses i2w to return the original string"""
+        output_strings = []
+        for idx in idx_list:
+            output_strings.append(self.i2w[str(idx)])
+
+        return(output_strings)
+
 
     def _load_vocab(self):
         with open(os.path.join(self.data_dir, self.vocab_file), 'r') as vocab_file:
@@ -96,14 +109,16 @@ class PTB(Dataset):
         else:
             self._load_vocab()
 
-        tokenizer = TweetTokenizer(preserve_case=False)
+        #tokenizer = TweetTokenizer(preserve_case=False)
 
         data = defaultdict(dict)
         with open(self.raw_data_path, 'r') as file:
 
             for i, line in enumerate(file):
 
-                words = tokenizer.tokenize(line)
+                #words = tokenizer.tokenize(line)
+                #words = nltk.word_tokenize(line)
+                words = line.split()
 
                 input = ['<sos>'] + words
                 input = input[:self.max_sequence_length]
@@ -135,7 +150,7 @@ class PTB(Dataset):
 
         assert self.split == 'train', "Vocablurary can only be created for training file."
 
-        tokenizer = TweetTokenizer(preserve_case=False)
+        #tokenizer = TweetTokenizer(preserve_case=False)
 
         w2c = OrderedCounter()
         w2i = dict()
@@ -149,7 +164,9 @@ class PTB(Dataset):
         with open(self.raw_data_path, 'r') as file:
 
             for i, line in enumerate(file):
-                words = tokenizer.tokenize(line)
+                #words = tokenizer.tokenize(line)
+                #words = nltk.word_tokenize(line)
+                words = line.split()
                 w2c.update(words)
 
             for w, c in w2c.items():
