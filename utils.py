@@ -12,6 +12,7 @@ class OrderedCounter(Counter, OrderedDict):
     def __reduce__(self):
         return self.__class__, (OrderedDict(self),)
 
+
 def to_var(x, volatile=False):
     if torch.cuda.is_available():
         x = x.cuda()
@@ -45,6 +46,7 @@ def interpolate(start, end, steps):
 
     return interpolation.T
 
+
 def expierment_name(args, ts):
 
     exp_name = str()
@@ -63,3 +65,9 @@ def expierment_name(args, ts):
     exp_name += "TS=%s"%ts
 
     return exp_name
+
+
+def get_tags(sentence):
+    pass
+
+
