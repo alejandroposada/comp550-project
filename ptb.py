@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from collections import defaultdict
 from torch.utils.data import Dataset
-#import nltk
+import nltk
 #from nltk.tokenize import TweetTokenizer
 
 from utils import OrderedCounter
@@ -39,39 +39,49 @@ class PTB(Dataset):
     def __len__(self):
         return len(self.data)
 
+
     def __getitem__(self, idx):
         idx = str(idx)
 
         return {
             'input': np.asarray(self.data[idx]['input']),
             'input_str': self._get_str(self.data[idx]['input']),
+            'input_tag': self._get_tag(self.data[idx]['input']),
             'target': np.asarray(self.data[idx]['target']),
             'target_str': self._get_str(self.data[idx]['target']),
+            'target_tag': self._get_tag(self.data[idx]['target']),
             'length': self.data[idx]['length']
         }
+
 
     @property
     def vocab_size(self):
         return len(self.w2i)
 
+
     @property
     def pad_idx(self):
         return self.w2i['<pad>']
+
 
     @property
     def sos_idx(self):
         return self.w2i['<sos>']
 
+
     @property
     def eos_idx(self):
         return self.w2i['<eos>']
+
 
     @property
     def unk_idx(self):
         return self.w2i['<unk>']
 
+
     def get_w2i(self):
         return self.w2i
+
 
     def get_i2w(self):
         return self.i2w
@@ -96,11 +106,29 @@ class PTB(Dataset):
         return(output_strings)
 
 
+    def _get_tag(self, idx_list):
+        """for a given idx_list, uses """
+        output_tags = []
+        output_strings = self._get_str(idx_list)
+
+        tags = nltk.pos_tag(output_strings)
+
+        # skip the words
+        for word, tag in tags:
+            if word in ['<pad>', '<unk>', '<sos>', '<eos>']:
+                output_tags.append('<unk>')
+            else:
+                output_tags.append(tag)
+
+        return(output_tags)
+
+
     def _load_vocab(self):
         with open(os.path.join(self.data_dir, self.vocab_file), 'r') as vocab_file:
             vocab = json.load(vocab_file)
 
         self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
+
 
     def _create_data(self):
 
@@ -146,6 +174,7 @@ class PTB(Dataset):
 
         self._load_data(vocab=False)
 
+
     def _create_vocab(self):
 
         assert self.split == 'train', "Vocablurary can only be created for training file."
@@ -184,3 +213,4 @@ class PTB(Dataset):
             vocab_file.write(data.encode('utf8', 'replace'))
 
         self._load_vocab()
+
