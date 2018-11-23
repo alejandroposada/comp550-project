@@ -67,7 +67,3 @@ def expierment_name(args, ts):
     return exp_name
 
 
-def get_tags(sentence):
-    pass
-
-
