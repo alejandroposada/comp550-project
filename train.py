@@ -136,7 +136,6 @@ def main(args):
 
 
                 # bookkeepeing
-                import IPython; IPython.embed()
                 tracker['ELBO'] = torch.cat((tracker['ELBO'], loss.data.view(1)), dim=0)
 
                 if args.tensorboard_logging:
