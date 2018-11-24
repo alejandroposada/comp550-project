@@ -24,17 +24,16 @@ def idx2word(idx, i2w, pad_idx):
     sent_str = [str()]*len(idx)
 
     for i, sent in enumerate(idx):
-
         for word_id in sent:
-
             if word_id == pad_idx:
                 break
-            sent_str[i] += i2w[str(word_id)] + " "
+
+            # call word_id.item() to do proper conversion into str
+            sent_str[i] += i2w[str(word_id.item())] + " "
 
         sent_str[i] = sent_str[i].strip()
 
-
-    return sent_str
+    return(sent_str)
 
 
 def interpolate(start, end, steps):
