@@ -12,6 +12,7 @@ class OrderedCounter(Counter, OrderedDict):
     def __reduce__(self):
         return self.__class__, (OrderedDict(self),)
 
+
 def to_var(x, volatile=False):
     if torch.cuda.is_available():
         x = x.cuda()
@@ -22,17 +23,16 @@ def idx2word(idx, i2w, pad_idx):
     sent_str = [str()]*len(idx)
 
     for i, sent in enumerate(idx):
-
         for word_id in sent:
-
             if word_id == pad_idx:
                 break
+
+            # call word_id.item() to do proper conversion into str
             sent_str[i] += i2w[str(word_id.item())] + " "
 
         sent_str[i] = sent_str[i].strip()
 
-
-    return sent_str
+    return(sent_str)
 
 
 def interpolate(start, end, steps):
@@ -43,6 +43,7 @@ def interpolate(start, end, steps):
         interpolation[dim] = np.linspace(s,e,steps+2)
 
     return interpolation.T
+
 
 def expierment_name(args, ts):
 
@@ -62,3 +63,5 @@ def expierment_name(args, ts):
     exp_name += "TS=%s"%ts
 
     return exp_name
+
+

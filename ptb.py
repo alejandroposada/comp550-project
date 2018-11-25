@@ -5,7 +5,8 @@ import torch
 import numpy as np
 from collections import defaultdict
 from torch.utils.data import Dataset
-from nltk.tokenize import TweetTokenizer
+import nltk
+#from nltk.tokenize import TweetTokenizer
 
 from utils import OrderedCounter
 
@@ -38,44 +39,56 @@ class PTB(Dataset):
     def __len__(self):
         return len(self.data)
 
+
     def __getitem__(self, idx):
         idx = str(idx)
 
         return {
             'input': np.asarray(self.data[idx]['input']),
+            'input_str': self._get_str(self.data[idx]['input']),
+            'input_tag': self._get_tag(self.data[idx]['input']),
             'target': np.asarray(self.data[idx]['target']),
+            'target_str': self._get_str(self.data[idx]['target']),
+            'target_tag': self._get_tag(self.data[idx]['target']),
             'length': self.data[idx]['length']
         }
+
 
     @property
     def vocab_size(self):
         return len(self.w2i)
 
+
     @property
     def pad_idx(self):
         return self.w2i['<pad>']
+
 
     @property
     def sos_idx(self):
         return self.w2i['<sos>']
 
+
     @property
     def eos_idx(self):
         return self.w2i['<eos>']
+
 
     @property
     def unk_idx(self):
         return self.w2i['<unk>']
 
+
     def get_w2i(self):
         return self.w2i
+
 
     def get_i2w(self):
         return self.i2w
 
 
     def _load_data(self, vocab=True):
-
+        """loads data from a saves .json file, with or without a matching vocab"""
         with open(os.path.join(self.data_dir, self.data_file), 'r') as file:
             self.data = json.load(file)
         if vocab:
@@ -83,11 +96,39 @@ class PTB(Dataset):
                 vocab = json.load(file)
             self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
 
+
+    def _get_str(self, idx_list):
+        """for a given idx_list, uses i2w to return the original string"""
+        output_strings = []
+        for idx in idx_list:
+            output_strings.append(self.i2w[str(idx)])
+
+        return(output_strings)
+
+
+    def _get_tag(self, idx_list):
+        """for a given idx_list, uses """
+        output_tags = []
+        output_strings = self._get_str(idx_list)
+
+        tags = nltk.pos_tag(output_strings)
+
+        # skip the words
+        for word, tag in tags:
+            if word in ['<pad>', '<unk>', '<sos>', '<eos>']:
+                output_tags.append('<unk>')
+            else:
+                output_tags.append(tag)
+
+        return(output_tags)
+
+
     def _load_vocab(self):
         with open(os.path.join(self.data_dir, self.vocab_file), 'r') as vocab_file:
             vocab = json.load(vocab_file)
 
         self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
+
 
     def _create_data(self):
 
@@ -96,14 +137,16 @@ class PTB(Dataset):
         else:
             self._load_vocab()
 
-        tokenizer = TweetTokenizer(preserve_case=False)
+        #tokenizer = TweetTokenizer(preserve_case=False)
 
         data = defaultdict(dict)
         with open(self.raw_data_path, 'r') as file:
 
             for i, line in enumerate(file):
 
-                words = tokenizer.tokenize(line)
+                #words = tokenizer.tokenize(line)
+                #words = nltk.word_tokenize(line)
+                words = line.split()
 
                 input = ['<sos>'] + words
                 input = input[:self.max_sequence_length]
@@ -131,11 +174,12 @@ class PTB(Dataset):
 
         self._load_data(vocab=False)
 
+
     def _create_vocab(self):
 
         assert self.split == 'train', "Vocablurary can only be created for training file."
 
-        tokenizer = TweetTokenizer(preserve_case=False)
+        #tokenizer = TweetTokenizer(preserve_case=False)
 
         w2c = OrderedCounter()
         w2i = dict()
@@ -149,7 +193,9 @@ class PTB(Dataset):
         with open(self.raw_data_path, 'r') as file:
 
             for i, line in enumerate(file):
-                words = tokenizer.tokenize(line)
+                #words = tokenizer.tokenize(line)
+                #words = nltk.word_tokenize(line)
+                words = line.split()
                 w2c.update(words)
 
             for w, c in w2c.items():
@@ -167,3 +213,4 @@ class PTB(Dataset):
             vocab_file.write(data.encode('utf8', 'replace'))
 
         self._load_vocab()
+
