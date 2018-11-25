@@ -1,7 +1,11 @@
-import torch
-import numpy as np
-from torch.autograd import Variable
 from collections import defaultdict, Counter, OrderedDict
+from nltk.corpus import ptb
+from nltk.corpus import treebank
+from nltk.grammar import CFG, Nonterminal
+from torch.autograd import Variable
+import nltk
+import numpy as np
+import torch
 
 class OrderedCounter(Counter, OrderedDict):
     'Counter that remembers the order elements are first encountered'
@@ -63,5 +67,35 @@ def expierment_name(args, ts):
     exp_name += "TS=%s"%ts
 
     return exp_name
+
+
+def get_parse(idx):
+    tree = ptb.parsed_sents()[0]
+    tree.pprint()
+
+
+def find_parse_tag(tag):
+    pass
+
+
+def generate_parse_tree(sentence):
+    pass
+
+
+def evaluate_parse_quality(parse):
+    pass
+
+
+def get_ptb_grammar():
+    """
+    makes a big dumb PTB CFG
+    https://stackoverflow.com/questions/7056996/how-do-i-get-a-set-of-grammar-rules-from-penn-treebank-using-python-nltk
+    https://groups.google.com/forum/#!topic/nltk-users/_LXtbIekLvc
+    """
+    ptb_productions = set(production for sent in ptb.parsed_sents()
+                            for production in sent.productions())
+    ptb_grammar = CFG(Nonterminal('S'), list(ptb_productions))
+
+    return(ptb_grammar)
 
 
