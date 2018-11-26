@@ -20,7 +20,6 @@ def to_var(x, volatile=False):
 
 
 def idx2word(idx, i2w, pad_idx):
-
     sent_str = [str()]*len(idx)
 
     for i, sent in enumerate(idx):
