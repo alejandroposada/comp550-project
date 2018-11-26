@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import json
 import torch
@@ -39,7 +41,7 @@ def main(args):
 
     if torch.cuda.is_available():
         model = model.cuda()
-    
+
     model.eval()
 
     samples, z = model.inference(n=args.num_samples)
