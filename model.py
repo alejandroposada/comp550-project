@@ -170,9 +170,7 @@ class SentenceVAE(nn.Module):
             if len(running_seqs) > 0:
                 input_sequence = input_sequence[running_seqs]
                 hidden = hidden[:, running_seqs]
-
                 running_seqs = torch.arange(0, len(running_seqs), out=self.tensor()).long()
-
             t += 1
 
         return generations, z
@@ -182,6 +180,10 @@ class SentenceVAE(nn.Module):
         if mode == 'greedy':
             _, sample = torch.topk(dist, 1, dim=-1)
         sample = sample.squeeze()
+
+        # fix if sample is a single value, enforce it to be a 1D tensor
+        if len(sample.shape) == 0:
+            sample = sample.view(1)
 
         return sample
 
