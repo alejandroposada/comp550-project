@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from nltk import induce_pcfg, treetransforms
 from nltk.corpus import ptb, treebank
 from nltk.grammar import CFG, Nonterminal
@@ -6,6 +8,7 @@ from nltk.parse.chart import LeafInitRule, FilteredBottomUpPredictCombineRule, F
 from nltk.parse.viterbi import ViterbiParser
 import nltk
 import pickle
+import os
 
 def graveyard():
     #LC_STRATEGY = [
@@ -46,15 +49,15 @@ def main():
             f.write(pickle.dumps(grammar))
 
     if not os.path.isfile('viterbi_parser.pkl'):
-        filename = open('grammar.pkl', 'rb') as f
+        filename = open('grammar.pkl', 'rb')
         grammar = pickle.load(filename)
         parser = ViterbiParser(grammar, trace=0)                 # cubic time
 
         with open('viterbi_parser.pkl', 'wb') as f:
             f.write(pickle.dumps(parser))
 
-    if not os.path.isfile('shift_reduce_parser.pkl')
-        filename = open('grammar.pkl', 'rb') as f
+    if not os.path.isfile('shift_reduce_parser.pkl'):
+        filename = open('grammar.pkl', 'rb')
         grammar = pickle.load(filename)
         parser = ShiftReduceParser(grammar, trace=0)             # linear time
 
