@@ -33,6 +33,9 @@ def main(args):
             min_occ=args.min_occ
         )
 
+    import IPython; IPython.embed()
+    sys.exit()
+
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,
         sos_idx=datasets['train'].sos_idx,
@@ -52,8 +55,6 @@ def main(args):
 
     if torch.cuda.is_available():
         model = model.cuda()
-
-    print(model)
 
     if args.tensorboard_logging:
         writer = SummaryWriter(os.path.join(args.logdir, expierment_name(args,ts)))
