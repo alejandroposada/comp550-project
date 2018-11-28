@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 
-import os
-import json
-import time
-import torch
-import argparse
-import numpy as np
+from collections import OrderedDict, defaultdict
 from multiprocessing import cpu_count
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
-from collections import OrderedDict, defaultdict
+import argparse
+import json
+import numpy as np
+import os
+import sys
+import time
+import torch
 
 from ptb import PTB
 from utils import to_var, idx2word, expierment_name
 from model import SentenceVAE
+import utils
 
 def main(args):
 

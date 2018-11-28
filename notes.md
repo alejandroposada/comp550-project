@@ -35,8 +35,17 @@ Methods
 - [ ] Evaluation of realism (PCFGs / Parse Accuracy Measure)
 
 ??? WHAT SHOULD WE USE TO EVALUATE REALISM?
+    -- content, specific content
+    -- maybe not applicable to nlp
+
 ??? SHOULD WE USE PHRASE TAGS? -- get away from 'grammatical' and move towards
     'phrase types'
+
+    -- sample from neihbourhood, show in continuity in phrase level information
+    -- evaluation should not be internal to the theory of the model -- BLEU
+    -- paraphrasing, sentence similarity -- BLEU
+
+
 ??? PARSERS -- Shift Reduce vs. Viterbi, UTILITY of PCFG??
 ??? CFG -- DEFINED ON ENTIRE PENN TREEBANK, SMARTER WAY TO DO THIS???
     -- HOW TO REDUCE SIZE OF GRAMMAR??

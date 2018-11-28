@@ -11,7 +11,7 @@ import nltk
 import numpy as np
 import time
 import torch
-
+import pickle
 
 class OrderedCounter(Counter, OrderedDict):
     'Counter that remembers the order elements are first encountered'
@@ -78,6 +78,13 @@ def expierment_name(args, ts):
 def get_parse(idx):
     tree = ptb.parsed_sents()[idx]
     tree.pprint()
+
+
+def load_parser(filename):
+    with open(filename, 'rb') as f:
+        parser = pickle.load(f)
+
+    return(parser)
 
 
 def find_parse_tag(tag):
