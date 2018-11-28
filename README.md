@@ -14,8 +14,8 @@ Conditional Generation from a Sentence Variational Autoencoder
     + `run_vae_train_jdv.sh`: `train.py` wrapper (jdv).
 + `downloaddata.sh` downloads treebank.
 + `make_parsers.py` makes `.pkl` files:
-    + `grammar.plk`: a PCFG of the entire penn treebank parses
-    + `viterbi_parser.plk`: a cubic-time parser trained on this grammar.
+    + `grammar.pkl`: a PCFG of the entire penn treebank parses
+    + `viterbi_parser.pkl`: a cubic-time parser trained on this grammar.
     + `shift_reduce_parser.pkl`: a linear-time parser trained on this grammar.
 + `inference.py`: generates samples from a saved-model's latent space.
     + `print_interpolations.sh`: `inference.py` wrapper.
