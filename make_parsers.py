@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import chainer
 from nltk import induce_pcfg, treetransforms
 from nltk.corpus import ptb, treebank
 from nltk.grammar import CFG, PCFG, Nonterminal, Production
@@ -9,6 +10,7 @@ from nltk.probability import FreqDist
 import nltk
 import os
 import pickle
+import time
 
 def graveyard():
     #LC_STRATEGY = [
@@ -21,7 +23,7 @@ def graveyard():
 
 
 def preprocess(item):
-    return(Nonterminal(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0]))
+    return(Nonterminal(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0]))
 
 
 def is_number(string):
@@ -32,9 +34,9 @@ def is_number(string):
         return(False)
 
 
-def is_added(add_dict, item):
+def is_key(dictionary, key):
     try:
-        add_dict[item.unicode_repr()]
+        dictionary[key]
         return(True)
     except:
         return(False)
@@ -52,7 +54,8 @@ def main():
     https://groups.google.com/forum/#!topic/nltk-users/_LXtbIekLvc
     https://www.nltk.org/_modules/nltk/grammar.html
     """
-    freq_thresh = 30
+    vocabulary = chainer.datasets.get_ptb_words_vocabulary()
+    freq_thresh = 0 ## ARBITRARY
     word_freqs = FreqDist(ptb.words())
 
     if not os.path.isfile('grammar.pkl'):
@@ -81,23 +84,30 @@ def main():
                     if type(item) == nltk.grammar.Nonterminal:
                         rhs.append(preprocess(item))
 
-                    # replace numbers with #
+                    # replace numbers with N
                     elif is_number(item):
-                        rhs.append('#')
+                        rhs.append('N')
+
+                    # items not in dictionary replaced with <unk>
+                    # dictionary requires lower
+                    elif not is_key(vocabulary, item.lower()):
+                        rhs.append('<unk>')
 
                     # replace infrequent words with <unk>
                     elif word_freqs[item] < freq_thresh:
                         rhs.append('<unk>')
 
+                    # lowercase all entries in the grammar
                     else:
-                        rhs.append(item)
+                        rhs.append(item.lower())
 
                 production._rhs = tuple(rhs)
 
-                if not is_added(add_dict, production):
+                if not is_key(add_dict, production.unicode_repr()):
                     add_dict[production.unicode_repr()] = True
                     productions.append(production)
 
+        print('** {} productions found! **'.format(len(productions)))
         grammar = induce_pcfg(Nonterminal('S'), productions)
 
         with open('grammar.pkl', 'wb') as f:
@@ -106,18 +116,35 @@ def main():
     if not os.path.isfile('viterbi_parser.pkl'):
         filename = open('grammar.pkl', 'rb')
         grammar = pickle.load(filename)
-        parser = ViterbiParser(grammar, trace=0)                 # cubic time
+        viterbi_parser = ViterbiParser(grammar, trace=0) # cubic time
 
         with open('viterbi_parser.pkl', 'wb') as f:
-            f.write(pickle.dumps(parser))
+            f.write(pickle.dumps(viterbi_parser))
 
     if not os.path.isfile('shift_reduce_parser.pkl'):
         filename = open('grammar.pkl', 'rb')
         grammar = pickle.load(filename)
-        parser = ShiftReduceParser(grammar, trace=0)             # linear time
+        shift_reduce_parser = ShiftReduceParser(grammar, trace=0)     # linear time
 
         with open('shift_reduce_parser.pkl', 'wb') as f:
-            f.write(pickle.dumps(parser))
+            f.write(pickle.dumps(shift_reduce_parser))
+
+    with open('data/ptb.train.txt', 'r') as f:
+        data = f.readlines()
+
+    #for sample in [1, 23, 20330, 20332, 443]:
+
+    #    t1 = time.time()
+    #    viterbi_parser.parse_one(data[sample].split())
+    #    t2 = time.time()
+    #    print('viterbi      = {:.2f} sec for {} words'.format(
+    #        t2-t1, len(data[sample].split())))
+
+    #    t1 = time.time()
+    #    shift_reduce_parser.parse_one(data[sample].split())
+    #    t2 = time.time()
+    #    print('shift reduce = {:.2f} sec for {} words'.format(
+    #        t2-t1, len(data[sample].split())))
 
 
 if __name__ == '__main__':

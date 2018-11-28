@@ -20,7 +20,24 @@ Conditional Generation from a Sentence Variational Autoencoder
 + `inference.py`: generates samples from a saved-model's latent space.
     + `print_interpolations.sh`: `inference.py` wrapper.
 
+**parser performance**
 
+Parser performance degrades rapidly for the viterbi algorithm when using longer
+sentences. We might need to switch to the `shift_reduce` parser for longer
+sentences.
+
+```
+viterbi      = 11.49  sec for 12 words
+shift reduce = 0.55   sec for 12 words
+viterbi      = 24.59  sec for 15 words
+shift reduce = 0.98   sec for 15 words
+viterbi      = 59.02  sec for 21 words
+shift reduce = 1.17   sec for 21 words
+viterbi      = 113.06 sec for 26 words
+shift reduce = 1.46   sec for 26 words
+viterbi      = 923.90 sec for 48 words
+shift reduce = 2.54   sec for 48 words
+```
 
 ![Model Architecture](https://github.com/timbmg/Sentence-VAE/blob/master/figs/model.png "Model Architecture")
 _Note: This implementation does not support LSTM's at the moment, but RNN's and GRU's._
