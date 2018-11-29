@@ -39,6 +39,20 @@ viterbi      = 923.90 sec for 48 words
 shift reduce = 2.54   sec for 48 words
 ```
 
+**penn treebank tags**
+
+[See here for all the details.](http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html#X)
+
+Possibilities:
+
++ CONJP - Conjunction Phrase.
++ INTJ - Interjection. Corresponds approximately to the part-of-speech tag UH.
++ QP - Quantifier Phrase (i.e. complex measure/amount phrase); used within NP.
++ WHNP - Wh-noun Phrase. Introduces a clause with an NP gap. May be null
+  (containing the 0 complementizer) or lexical, containing some wh-word, e.g.
+  who, which book, whose daughter, none of which, or how many leopards.
+
+
 ![Model Architecture](https://github.com/timbmg/Sentence-VAE/blob/master/figs/model.png "Model Architecture")
 _Note: This implementation does not support LSTM's at the moment, but RNN's and GRU's._
 ## Results
