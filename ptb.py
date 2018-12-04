@@ -1,13 +1,14 @@
-import os
+from collections import defaultdict
+from nltk.corpus import ptb, treebank
+from string import punctuation as PUNCTUATION
+from torch.utils.data import Dataset
 import io
 import json
-import torch
-import numpy as np
-from collections import defaultdict
-from torch.utils.data import Dataset
 import nltk
-#from nltk.tokenize import TweetTokenizer
-
+import numpy as np
+import os
+import torch
+import time
 from utils import OrderedCounter
 
 class PTB(Dataset):
@@ -129,8 +130,44 @@ class PTB(Dataset):
 
         self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
 
+    def _is_number(self, string):
+        try:
+            float(string)
+            return(True)
+        except:
+            return(False)
+
+
+    def _is_key(self, dictionary, key):
+        try:
+            dictionary[key]
+            return(True)
+        except:
+            return(False)
+
+
+    def _preprocess(self, words):
+        """removes punctuation, changes numbers to N, and non-vocab to <unk>"""
+        output = []
+        for word in words:
+            if word in PUNCTUATION:
+                pass
+            elif self._is_number(word):
+                output.append('N')
+            elif not self._is_key(self.w2i, word.lower()):
+                output.append('<unk>')
+            else:
+                output.append(word.lower())
+
+        return(output)
+
 
     def _create_data(self):
+
+        # hard coding of the number of samples for train and valid
+        # n_train = 42069
+        # n_valid = 7139
+        # n_total = 49208
 
         if self.split == 'train':
             self._create_vocab()
@@ -140,33 +177,44 @@ class PTB(Dataset):
         #tokenizer = TweetTokenizer(preserve_case=False)
 
         data = defaultdict(dict)
-        with open(self.raw_data_path, 'r') as file:
 
-            for i, line in enumerate(file):
+        # we build the dataset by looping through these inds of parsed_sents()
+        if self.split == 'train':
+            n_begin = 0
+            n_end = 42069
+        else:
+            n_begin = 42069
+            n_end = 49208
 
-                #words = tokenizer.tokenize(line)
-                #words = nltk.word_tokenize(line)
-                words = line.split()
+        # loop through treebank parsed sents
+        for i in range(n_begin, n_end):
 
-                input = ['<sos>'] + words
-                input = input[:self.max_sequence_length]
+            t1 = time.time()
+            words = ptb.parsed_sents()[i].leaves()
+            words = self._preprocess(words)
 
-                target = words[:self.max_sequence_length-1]
-                target = target + ['<eos>']
+            input = ['<sos>'] + words
+            input = input[:self.max_sequence_length]
 
-                assert len(input) == len(target), "%i, %i"%(len(input), len(target))
-                length = len(input)
+            target = words[:self.max_sequence_length-1]
+            target = target + ['<eos>']
 
-                input.extend(['<pad>'] * (self.max_sequence_length-length))
-                target.extend(['<pad>'] * (self.max_sequence_length-length))
+            assert len(input) == len(target), "%i, %i"%(len(input), len(target))
+            length = len(input)
 
-                input = [self.w2i.get(w, self.w2i['<unk>']) for w in input]
-                target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
+            input.extend(['<pad>'] * (self.max_sequence_length-length))
+            target.extend(['<pad>'] * (self.max_sequence_length-length))
 
-                id = len(data)
-                data[id]['input'] = input
-                data[id]['target'] = target
-                data[id]['length'] = length
+            input = [self.w2i.get(w, self.w2i['<unk>']) for w in input]
+            target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
+
+            id = len(data)
+            data[id]['input'] = input
+            data[id]['target'] = target
+            data[id]['length'] = length
+
+            t2 = time.time()
+            print('sentence {}/{} done in {} sec'.format(i, n_end, t2-t1))
 
         with io.open(os.path.join(self.data_dir, self.data_file), 'wb') as data_file:
             data = json.dumps(data, ensure_ascii=False)
