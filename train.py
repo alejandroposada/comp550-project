@@ -35,6 +35,9 @@ def main(args):
             min_occ=args.min_occ
         )
 
+    datasets['train'][0]
+    sys.exit(1)
+
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,
         sos_idx=datasets['train'].sos_idx,

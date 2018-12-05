@@ -10,6 +10,7 @@ import os
 import torch
 import time
 from utils import OrderedCounter
+from multiprocessing import Pool
 
 class PTB(Dataset):
 
@@ -43,6 +44,8 @@ class PTB(Dataset):
 
     def __getitem__(self, idx):
         idx = str(idx)
+
+        import IPython; IPython.embed()
 
         return {
             'input': np.asarray(self.data[idx]['input']),
@@ -175,9 +178,6 @@ class PTB(Dataset):
             self._load_vocab()
 
         #tokenizer = TweetTokenizer(preserve_case=False)
-
-        data = defaultdict(dict)
-
         # we build the dataset by looping through these inds of parsed_sents()
         if self.split == 'train':
             n_begin = 0
@@ -186,35 +186,59 @@ class PTB(Dataset):
             n_begin = 42069
             n_end = 49208
 
-        # loop through treebank parsed sents
-        for i in range(n_begin, n_end):
+        pool = Pool() # required for multicore
+        data = defaultdict(dict)
 
+        # collect all treebank parsed sents for multi-processing
+        t1 = time.time()
+        all_sentences = ptb.sents()
+        all_sentences = all_sentences[n_begin:n_end]
+        t2 = time.time()
+        print('read all sentences in {} sec'.format(t2-t1))
+
+        # preprocess all sentences in paralell
+        try:
             t1 = time.time()
-            words = ptb.parsed_sents()[i].leaves()
-            words = self._preprocess(words)
+            preprocessed_sentences = pool.map_async(
+                self._preprocess, all_sentences).get(9999999)
+            pool.close()
+            t2 = time.time()
+            print('preprocessed all sentences in {} min'.format((t2-t1)/60.0))
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            sys.exit(1)
 
-            input = ['<sos>'] + words
-            input = input[:self.max_sequence_length]
+            #words = ptb.parsed_sents()[i].leaves()
+            #words = self._preprocess(words)
+
+        # now, finish things up by adding start/end tags
+        t1 = time.time()
+        for i, words in enumerate(preprocessed_sentences):
+
+            inputs = ['<sos>'] + words
+            inputs = inputs[:self.max_sequence_length]
 
             target = words[:self.max_sequence_length-1]
             target = target + ['<eos>']
 
-            assert len(input) == len(target), "%i, %i"%(len(input), len(target))
-            length = len(input)
+            assert len(inputs) == len(target), "%i, %i"%(len(inputs), len(target))
+            length = len(inputs)
 
-            input.extend(['<pad>'] * (self.max_sequence_length-length))
+            inputs.extend(['<pad>'] * (self.max_sequence_length-length))
             target.extend(['<pad>'] * (self.max_sequence_length-length))
 
-            input = [self.w2i.get(w, self.w2i['<unk>']) for w in input]
+            inputs = [self.w2i.get(w, self.w2i['<unk>']) for w in inputs]
             target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
 
-            id = len(data)
-            data[id]['input'] = input
-            data[id]['target'] = target
-            data[id]['length'] = length
+            # TODO: could just replace by i...
+            #id = len(data)
+            data[i]['input'] = inputs
+            data[i]['target'] = target
+            data[i]['length'] = length
 
-            t2 = time.time()
-            print('sentence {}/{} done in {} sec'.format(i, n_end, t2-t1))
+        t2 = time.time()
+        print('sentences loaded into dict in {} sec'.format(i, n_end, t2-t1))
 
         with io.open(os.path.join(self.data_dir, self.data_file), 'wb') as data_file:
             data = json.dumps(data, ensure_ascii=False)
