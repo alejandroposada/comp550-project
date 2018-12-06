@@ -37,18 +37,6 @@ def main(args):
             min_occ=args.min_occ
         )
 
-    # usage:
-    # datasets['train'][0]
-    #     'input': np.asarray(self.data[idx]['input']),
-    #     'input_str': self._get_str(self.data[idx]['input']),
-    #     'input_tag': self._get_tag(self.data[idx]['input']),
-    #     'target': np.asarray(self.data[idx]['target']),
-    #     'target_str': self._get_str(self.data[idx]['target']),
-    #     'target_tag': self._get_tag(self.data[idx]['target']),
-    #     'length': self.data[idx]['length']
-    #     'phrase_tags': np.asarray(self.data[idx]['tags'])
-
-
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,
         sos_idx=datasets['train'].sos_idx,

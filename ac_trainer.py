@@ -172,6 +172,16 @@ class AC_Trainer:
         new_data.requires_grad = True
         return new_data
 
+    def get_label_matrix(self, dataloader):
+        # create a subscriptable numpy array of tags
+        tags = []
+        for item in dataloader.dataset.data.items():
+            tags.append(item['tags'])
+        tags = np.vstack(tags)
+
+        return(tags)
+
+
     def d_critic_histogram(self, iteration):
         for name, param in self.real_critic.named_parameters():  # actor
             self.tensorboad_writer.add_histogram('real_critic/' + name, param.clone().cpu().data.numpy(), iteration,
@@ -190,6 +200,7 @@ class AC_Trainer:
         start = np.random.randint(self.n_train - batch_size - 1)
         fake_attr = self.train_labels[start:start + batch_size]
         return torch.FloatTensor(fake_attr)
+
 
     def _set_label_type(self):
 
