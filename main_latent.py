@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 from model import SentenceVAE
 from ptb import PTB
@@ -54,6 +56,7 @@ if __name__ == '__main__':
                                 num_workers=cpu_count(),
                                 pin_memory=torch.cuda.is_available()
                                 )
+
     validDataLoader = DataLoader(
                                 dataset=datasets['valid'],
                                 batch_size=args.batch_size,
