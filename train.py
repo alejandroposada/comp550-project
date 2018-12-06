@@ -18,6 +18,7 @@ from utils import to_var, idx2word, expierment_name
 from model import SentenceVAE
 import utils
 
+
 def main(args):
 
     ts = time.strftime('%Y-%b-%d-%H:%M:%S', time.gmtime())
@@ -35,18 +36,6 @@ def main(args):
             max_sequence_length=args.max_sequence_length,
             min_occ=args.min_occ
         )
-
-    # usage:
-    # datasets['train'][0]
-    #     'input': np.asarray(self.data[idx]['input']),
-    #     'input_str': self._get_str(self.data[idx]['input']),
-    #     'input_tag': self._get_tag(self.data[idx]['input']),
-    #     'target': np.asarray(self.data[idx]['target']),
-    #     'target_str': self._get_str(self.data[idx]['target']),
-    #     'target_tag': self._get_tag(self.data[idx]['target']),
-    #     'length': self.data[idx]['length']
-    #     'phrase_tags': np.asarray(self.data[idx]['tags'])
-
 
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,
