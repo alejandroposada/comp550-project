@@ -14,6 +14,9 @@ class AC_Trainer:
         self.real_critic = real_critic
         self.attr_critic = attr_critic
 
+        self.train_labels = self.get_label_matrix(trainDataLoader)
+        self.valid_labels = self.get_label_matrix(valDataloader)
+
         self.start_epoch = 1
 
         self.n_train = len(trainDataLoader.dataset)
@@ -156,6 +159,14 @@ class AC_Trainer:
                            total_real_loss / iteration, epoch)
         print("[+] Epoch:[{}/{}] train actor average loss :{}".format(epoch, self.num_epochs, train_loss))
 
+    def get_label_matrix(self, dataloader):
+        # create a subscriptable tensor of tags
+        tags = []
+        for item in dataloader.dataset.data.values():
+            tags.append(item['tags'])
+        tags = np.vstack(tags)
+        return tags
+
     def re_allocate(self, data):
         new_data = data.detach()
         new_data.requires_grad = True
@@ -175,15 +186,10 @@ class AC_Trainer:
             self.tensorboad_writer.add_histogram('actor/' + name + '/grad', param.grad.clone().cpu().data.numpy(),
                                                  iteration, bins='sturges')
 
-    def get_fake_attributes(self, batch_size, num_labels=5):
+    def get_fake_attributes(self, batch_size):
         start = np.random.randint(self.n_train - batch_size - 1)
-        data = self.trainDataLoader.dataset[start:start + batch_size]  # TODO: how to index this, damnit jSON!
-        fake_attributes = []
-
-        for (name, labels) in data:  # TODO: update this when Joseph does the label thing
-            fake_attributes.append(labels)
-
-        return torch.FloatTensor(fake_attributes)
+        fake_attr = self.train_labels[start:start + batch_size]
+        return torch.FloatTensor(fake_attr)
 
     def _set_label_type(self):
 
