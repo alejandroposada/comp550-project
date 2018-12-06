@@ -60,7 +60,7 @@ class Actor:
 
 
 class Critic:
-	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=None, conditional_version=True):
+	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=None, num_outputs=1	, conditional_version=True):
 		# TODO: default num_labels
 		"""
 		Critic feed-forward network D(z) (figure 12b in the paper).
@@ -91,7 +91,7 @@ class Critic:
 		for i in range(num_layers - 1):
 			layers.append(Linear(self.dim_model, self.dim_model))
 			layers.append(nn.ReLU())
-		layers.append(Linear(self.dim_model, 1))
+		layers.append(Linear(self.dim_model, num_outputs))
 		self.layers = nn.Sequential(*layers)
 
 	def forward(self, x, label=None):

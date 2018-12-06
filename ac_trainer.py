@@ -7,14 +7,12 @@ from tensorboardX import SummaryWriter
 
 
 class AC_Trainer:
-    def __init__(self, data, vae_model, actor, real_critic, attr_critic, num_epochs,
-                 trainDataLoader, valDataLoader, device, lr=1e-4):
+    def __init__(self, vae_model, actor, real_critic, attr_critic, num_epochs,
+                 trainDataLoader, valDataLoader, device=0, lr=1e-4):
         self.vae_model = vae_model
         self.actor = actor
         self.real_critic = real_critic
         self.attr_critic = attr_critic
-
-        self.data = data
 
         self.start_epoch = 1
 
@@ -42,7 +40,7 @@ class AC_Trainer:
     def train(self):
         for epoch in tqdm(range(self.start_epoch, self.num_epochs+1)):
             self.train_epoch(epoch)
-            #TODO: Get sample
+            # TODO: Get sample
 
             if epoch % 10:
                 self.save_model(epoch)
@@ -64,10 +62,11 @@ class AC_Trainer:
         self.attr_critic.train()
 
         # Traces
-        train_loss, iteration, total_actor_loss, total_real_loss, total_distance_penalty, actor_iteration = 0, 0, 0, 0, 0, 0
+        train_loss, iteration, total_actor_loss, total_real_loss, total_dist_penalty, actor_iteration = 0, 0, 0, 0, 0, 0
 
         for batch_idx, batch in enumerate(self.trainDataLoader):  # TODO: update the labels thing
             # TODO: get labels
+            labels = None
             labels = labels.to(self.device)
 
             self.iteration += 1
@@ -144,16 +143,16 @@ class AC_Trainer:
                 actor_loss.backward()
                 total_actor_loss += actor_loss.item()
                 self.actor_optim.step()
-                total_distance_penalty += dist_penalty.item()
+                total_dist_penalty += dist_penalty.item()
                 actor_iteration += 1
                 if (actor_iteration % 100) == 0:
                     self.d_actor_histogram(self.iteration)
 
-        print("Distance penalty: {} , {} | Critic loss: {}".format(total_distance_penalty / actor_iteration,
+        print("Distance penalty: {} , {} | Critic loss: {}".format(total_dist_penalty / actor_iteration,
                                                                    total_actor_loss / actor_iteration,
                                                                    total_real_loss / iteration))
 
-        self.summary_write(total_distance_penalty / actor_iteration, total_actor_loss / actor_iteration,
+        self.summary_write(total_dist_penalty / actor_iteration, total_actor_loss / actor_iteration,
                             total_real_loss / iteration, epoch)
         print("[+] Epoch:[{}/{}] train actor average loss :{}".format(epoch, self.num_epochs, train_loss))
 
@@ -197,8 +196,8 @@ class AC_Trainer:
         self.tensorboad_writer.add_scalar('data/discriminator_loss', real_loss, epoch)
 
     def save_model(self, epoch):
-        torch.save(self.actor.state_dict(), './save_model/actor_model' + str(epoch) + '_' + self.data + '.path.tar')
+        torch.save(self.actor.state_dict(), './save_model/actor_model' + str(epoch) + '.path.tar')
         torch.save(self.real_critic.state_dict(),
-                   './save_model/real_d_model' + str(epoch) + '_' + self.data + '.path.tar')
+                   './save_model/real_d_model' + str(epoch) + '.path.tar')
         torch.save(self.attr_critic.state_dict(),
-                   './save_model/attr_d_model' + str(epoch) + '_' + self.data + '.path.tar')
+                   './save_model/attr_d_model' + str(epoch) + '.path.tar')
