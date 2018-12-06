@@ -2,6 +2,7 @@
 
 from collections import OrderedDict, defaultdict
 from multiprocessing import cpu_count
+from nltk.corpus import ptb, treebank
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 import argparse
@@ -35,8 +36,17 @@ def main(args):
             min_occ=args.min_occ
         )
 
-    datasets['train'][0]
-    sys.exit(1)
+    # usage:
+    # datasets['train'][0]
+    #     'input': np.asarray(self.data[idx]['input']),
+    #     'input_str': self._get_str(self.data[idx]['input']),
+    #     'input_tag': self._get_tag(self.data[idx]['input']),
+    #     'target': np.asarray(self.data[idx]['target']),
+    #     'target_str': self._get_str(self.data[idx]['target']),
+    #     'target_tag': self._get_tag(self.data[idx]['target']),
+    #     'length': self.data[idx]['length']
+    #     'phrase_tags': np.asarray(self.data[idx]['tags'])
+
 
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,

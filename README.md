@@ -39,6 +39,20 @@ viterbi      = 923.90 sec for 48 words
 shift reduce = 2.54   sec for 48 words
 ```
 
+**dataset interaction**
+
+`datasets['train'][0]` returns a dict of sentence 0 from 'train' (vs 'valid')
+with the following fields:
+
++ `input`: numpy array of words in int form,
++ `input_str`: list of the words (preprocessed)
++ `input_tag`: list of the POS tags (maybe not required),
++ `target`: numpt array of the words in int form,
++ `target_str`: list of the words (preprocessed),
++ `target_tag`: list of the POS tags (maybe not required),
++ `length`: length of the input sentence in tokens
++ `phrase_tags`: binary vector of the phrase-level tags `['SBAR', 'PRT', 'PNP', 'INTJ', 'ADJP']`
+
 **penn treebank tags**
 
 [See here for all the details.](http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html#X)

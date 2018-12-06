@@ -1,16 +1,17 @@
 from collections import defaultdict
+from multiprocessing import Pool
 from nltk.corpus import ptb, treebank
 from string import punctuation as PUNCTUATION
 from torch.utils.data import Dataset
+from utils import OrderedCounter
 import io
 import json
 import nltk
 import numpy as np
 import os
-import torch
+import sys
 import time
-from utils import OrderedCounter
-from multiprocessing import Pool
+import torch
 
 class PTB(Dataset):
 
@@ -44,9 +45,6 @@ class PTB(Dataset):
 
     def __getitem__(self, idx):
         idx = str(idx)
-
-        import IPython; IPython.embed()
-
         return {
             'input': np.asarray(self.data[idx]['input']),
             'input_str': self._get_str(self.data[idx]['input']),
@@ -54,7 +52,8 @@ class PTB(Dataset):
             'target': np.asarray(self.data[idx]['target']),
             'target_str': self._get_str(self.data[idx]['target']),
             'target_tag': self._get_tag(self.data[idx]['target']),
-            'length': self.data[idx]['length']
+            'length': self.data[idx]['length'],
+            'phrase_tags': np.asarray(self.data[idx]['tags'])
         }
 
 
@@ -133,6 +132,7 @@ class PTB(Dataset):
 
         self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
 
+
     def _is_number(self, string):
         try:
             float(string)
@@ -165,6 +165,27 @@ class PTB(Dataset):
         return(output)
 
 
+    def _preprocess_nonterminal(self, item):
+        """removes all tags"""
+        return(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0])
+
+
+    def _get_phrase_tags(self, parse):
+        nonterminals = set()
+        for production in parse.productions():
+            nonterminals.add(self._preprocess_nonterminal(production._lhs))
+
+        phrase_tags = ['SBAR', 'PRT', 'PNP', 'INTJ', 'ADJP']
+        phrase_vect = []
+        for i, tag in enumerate(phrase_tags):
+            if tag in nonterminals:
+                phrase_vect.append(1)
+            else:
+                phrase_vect.append(0)
+
+        return(phrase_vect)
+
+
     def _create_data(self):
 
         # hard coding of the number of samples for train and valid
@@ -186,17 +207,19 @@ class PTB(Dataset):
             n_begin = 42069
             n_end = 49208
 
-        pool = Pool() # required for multicore
         data = defaultdict(dict)
 
-        # collect all treebank parsed sents for multi-processing
+        # collect all treebank sentences and nonterminals for multi-processing
         t1 = time.time()
         all_sentences = ptb.sents()
         all_sentences = all_sentences[n_begin:n_end]
+        all_parses = ptb.parsed_sents()
+        all_parses = all_parses[n_begin:n_end]
         t2 = time.time()
         print('read all sentences in {} sec'.format(t2-t1))
 
         # preprocess all sentences in paralell
+        pool = Pool() # required for multicore
         try:
             t1 = time.time()
             preprocessed_sentences = pool.map_async(
@@ -209,11 +232,25 @@ class PTB(Dataset):
             pool.join()
             sys.exit(1)
 
-            #words = ptb.parsed_sents()[i].leaves()
-            #words = self._preprocess(words)
+
+        # get all phrase tags in paralell
+        pool = Pool()
+        try:
+            t1 = time.time()
+            phrase_tags = pool.map_async(
+                self._get_phrase_tags, all_parses).get(9999999)
+            pool.close()
+            t2 = time.time()
+            print('phrase tags for all sentences collected in {} min'.format(
+                (t2-t1)/60.0))
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            sys.exit(1)
 
         # now, finish things up by adding start/end tags
         t1 = time.time()
+        empty_count = 0 # keeps track of sentences with no phrase tags
         for i, words in enumerate(preprocessed_sentences):
 
             inputs = ['<sos>'] + words
@@ -231,14 +268,18 @@ class PTB(Dataset):
             inputs = [self.w2i.get(w, self.w2i['<unk>']) for w in inputs]
             target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
 
-            # TODO: could just replace by i...
-            #id = len(data)
+            # keep track of sentences with no phrase tags...
+            if np.sum(phrase_tags[i]) == 0:
+                empty_count += 1
+
             data[i]['input'] = inputs
             data[i]['target'] = target
             data[i]['length'] = length
+            data[i]['tags'] = phrase_tags[i]
 
         t2 = time.time()
         print('sentences loaded into dict in {} sec'.format(i, n_end, t2-t1))
+        print('{} sentences have no matching phrase tags'.format(empty_count))
 
         with io.open(os.path.join(self.data_dir, self.data_file), 'wb') as data_file:
             data = json.dumps(data, ensure_ascii=False)
