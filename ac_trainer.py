@@ -64,14 +64,14 @@ class AC_Trainer:
         # Traces
         train_loss, iteration, total_actor_loss, total_real_loss, total_dist_penalty, actor_iteration = 0, 0, 0, 0, 0, 0
 
-        for batch_idx, batch in enumerate(self.trainDataLoader):  # TODO: update the labels thing
-            # TODO: get labels
-            labels = None
+        for batch_idx, batch in enumerate(self.trainDataLoader):
+            batch_size = batch['input'].size(0)
+
+            labels = batch['phrase_tags']
             labels = labels.to(self.device)
 
             self.iteration += 1
             iteration += 1
-            batch_size = batch['input'].size(0)
 
             real_data = torch.ones(batch_size, 1).to(self.device)
             fake_data = torch.zeros(batch_size, 1).to(self.device)
@@ -177,7 +177,7 @@ class AC_Trainer:
 
     def get_fake_attributes(self, batch_size, num_labels=10):
         start = np.random.randint(self.n_train - batch_size - 1)
-        data = self.trainDataLoader.dataset[start:start + batch_size]['input']  # TODO: verify this
+        data = self.trainDataLoader.dataset[start:start + batch_size] # TODO: how to index this, damnit jSON!
         fake_attributes = []
 
         for (name, labels) in data:  # TODO: update this when Joseph does the label thing

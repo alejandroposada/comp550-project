@@ -1,10 +1,12 @@
 import argparse
 from model import SentenceVAE
 from ptb import PTB
-from collections import OrderedDict
 from actor_critic import Actor, Critic
 from ac_trainer import AC_Trainer
 import torch
+from torch.utils.data import DataLoader
+from collections import OrderedDict
+from multiprocessing import cpu_count
 
 
 if __name__ == '__main__':
@@ -35,19 +37,32 @@ if __name__ == '__main__':
 
     cuda = not args.no_cuda and torch.cuda.is_available()
 
-    splits = ['train', 'valid'] + (['test'] if args.test else [])
-
-    # Generates a data structure
-    # TODO: load data
+    # Get DataLoaders
     datasets = OrderedDict()
-    for split in splits:
+    for split in ['train', 'valid']:
         datasets[split] = PTB(
-            data_dir=args.data_dir,
-            split=split,
-            create_data=args.create_data,
-            max_sequence_length=args.max_sequence_length,
-            min_occ=args.min_occ
-        )
+                              data_dir=args.data_dir,
+                              split=split,
+                              create_data=args.create_data,
+                              max_sequence_length=args.max_sequence_length,
+                              min_occ=args.min_occ
+                              )
+    trainDataLoader = DataLoader(
+                                dataset=datasets['train'],
+                                batch_size=args.batch_size,
+                                shuffle=True,
+                                num_workers=cpu_count(),
+                                pin_memory=torch.cuda.is_available()
+                                )
+    validDataLoader = DataLoader(
+                                dataset=datasets['valid'],
+                                batch_size=args.batch_size,
+                                shuffle=True,
+                                num_workers=cpu_count(),
+                                pin_memory=torch.cuda.is_available()
+                                )
+
+    num_tags = len(datasets['train'][0]['phrase_tags'])      # 5
 
     # Load trained VAE
     vae_model = SentenceVAE(
@@ -69,24 +84,28 @@ if __name__ == '__main__':
     checkpoint = torch.load(args.vae_path)
     vae_model.load_state_dict(checkpoint)
 
-    # TODO: num_labels
     actor = Actor(dim_z=args.embedding_size,
-                  dim_model=2048)
+                  dim_model=2048,
+                  num_labels=num_tags)
+
     real_critic = Critic(dim_z=args.embedding_size,
                          dim_model=2048,
+                         num_labels=num_tags,
                          conditional_version=True)
+
     attr_critic = Critic(dim_z=args.embedding_size,
                          dim_model=2048,
-                         num_outputs=5,
-                         conditional_version=True)              # TODO: num_outputs
+                         num_labels=num_tags,
+                         num_outputs=num_tags,
+                         conditional_version=True)
 
     ac_trainer = AC_Trainer(vae_model=vae_model,
                             actor=actor,
                             real_critic=real_critic,
                             attr_critic=attr_critic,
                             num_epochs=args.num_epochs,
-                            trainDataLoader=None,
-                            valDataLoader=None)                 # TODO: dataloaders
+                            trainDataLoader=trainDataLoader,
+                            valDataLoader=validDataLoader)
 
     # Train!
     print('\n Training has started \n')

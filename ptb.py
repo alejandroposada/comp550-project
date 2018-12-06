@@ -13,6 +13,7 @@ import sys
 import time
 import torch
 
+
 class PTB(Dataset):
 
     def __init__(self, data_dir, split, create_data, **kwargs):
