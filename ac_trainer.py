@@ -1,9 +1,9 @@
-from tqdm import tqdm as tqdm
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from tensorboardX import SummaryWriter
+from tqdm import tqdm as tqdm
 
 
 class AC_Trainer:
@@ -15,7 +15,7 @@ class AC_Trainer:
         self.attr_critic = attr_critic
 
         self.train_labels = self.get_label_matrix(trainDataLoader)
-        self.valid_labels = self.get_label_matrix(valDataloader)
+        self.valid_labels = self.get_label_matrix(valDataLoader)
 
         self.start_epoch = 1
 
