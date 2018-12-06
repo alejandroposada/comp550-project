@@ -15,8 +15,7 @@ class Linear(nn.Module):
 
 
 class Actor:
-	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=10, conditional_version=True):
-		# TODO: default num_labels
+	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=5, conditional_version=True):
 		"""
 		Actor feed-forward network G(z) (figure 12a in the paper).
 		:param dim_z: dimension of the VAE's latent vector.
@@ -60,8 +59,7 @@ class Actor:
 
 
 class Critic:
-	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=None, num_outputs=1	, conditional_version=True):
-		# TODO: default num_labels
+	def __init__(self, dim_z, dim_model, num_layers=4, num_outputs=1, num_labels=5, conditional_version=True):
 		"""
 		Critic feed-forward network D(z) (figure 12b in the paper).
 		:param dim_z: dimension of the VAE's latent vector.

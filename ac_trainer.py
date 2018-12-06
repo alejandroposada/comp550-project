@@ -38,7 +38,7 @@ class AC_Trainer:
         self.N_between_eval = 100
 
     def train(self):
-        for epoch in tqdm(range(self.start_epoch, self.num_epochs+1)):
+        for epoch in tqdm(range(self.start_epoch, self.num_epochs + 1)):
             self.train_epoch(epoch)
             # TODO: Get sample
 
@@ -153,7 +153,7 @@ class AC_Trainer:
                                                                    total_real_loss / iteration))
 
         self.summary_write(total_dist_penalty / actor_iteration, total_actor_loss / actor_iteration,
-                            total_real_loss / iteration, epoch)
+                           total_real_loss / iteration, epoch)
         print("[+] Epoch:[{}/{}] train actor average loss :{}".format(epoch, self.num_epochs, train_loss))
 
     def re_allocate(self, data):
@@ -162,11 +162,11 @@ class AC_Trainer:
         return new_data
 
     def d_critic_histogram(self, iteration):
-            for name, param in self.real_critic.named_parameters():  # actor
-                self.tensorboad_writer.add_histogram('real_critic/' + name, param.clone().cpu().data.numpy(), iteration,
-                                                     bins='sturges')
-                self.tensorboad_writer.add_histogram('real_critic/' + name + '/grad',
-                                                     param.grad.clone().cpu().data.numpy(), iteration, bins='sturges')
+        for name, param in self.real_critic.named_parameters():  # actor
+            self.tensorboad_writer.add_histogram('real_critic/' + name, param.clone().cpu().data.numpy(), iteration,
+                                                 bins='sturges')
+            self.tensorboad_writer.add_histogram('real_critic/' + name + '/grad',
+                                                 param.grad.clone().cpu().data.numpy(), iteration, bins='sturges')
 
     def d_actor_histogram(self, iteration):
         for name, param in self.actor.named_parameters():  # actor
@@ -175,9 +175,9 @@ class AC_Trainer:
             self.tensorboad_writer.add_histogram('actor/' + name + '/grad', param.grad.clone().cpu().data.numpy(),
                                                  iteration, bins='sturges')
 
-    def get_fake_attributes(self, batch_size, num_labels=10):
+    def get_fake_attributes(self, batch_size, num_labels=5):
         start = np.random.randint(self.n_train - batch_size - 1)
-        data = self.trainDataLoader.dataset[start:start + batch_size] # TODO: how to index this, damnit jSON!
+        data = self.trainDataLoader.dataset[start:start + batch_size]  # TODO: how to index this, damnit jSON!
         fake_attributes = []
 
         for (name, labels) in data:  # TODO: update this when Joseph does the label thing
