@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA')
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--epochs', type=int, default=50)
-    parser.add_argument('--vae_path', type=str, default=)
+    parser.add_argument('--vae_path', type=str, default=None)   # TODO:default path
 
     args = parser.parse_args()
     print(args)
@@ -77,8 +77,8 @@ if __name__ == '__main__':
                          conditional_version=True)
     attr_critic = Critic(dim_z=args.embedding_size,
                          dim_model=2048,
-                         num_outputs=5
-                         conditional_version=True) #TODO: num_outputs
+                         num_outputs=5,
+                         conditional_version=True)              # TODO: num_outputs
 
     ac_trainer = AC_Trainer(vae_model=vae_model,
                             actor=actor,
@@ -86,9 +86,8 @@ if __name__ == '__main__':
                             attr_critic=attr_critic,
                             num_epochs=args.num_epochs,
                             trainDataLoader=None,
-                            valDataLoader=None)
+                            valDataLoader=None)                 # TODO: dataloaders
 
     # Train!
     print('\n Training has started \n')
     ac_trainer.train()
-
