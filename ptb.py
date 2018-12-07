@@ -13,6 +13,9 @@ import sys
 import time
 import torch
 
+# http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html
+PHRASE_TAGS = ['SBAR', 'PP', 'ADJP', 'QP', 'WHNP' , 'ADVP']
+
 class PTB(Dataset):
 
     def __init__(self, data_dir, split, create_data, **kwargs):
@@ -173,11 +176,12 @@ class PTB(Dataset):
     def _get_phrase_tags(self, parse):
         nonterminals = set()
         for production in parse.productions():
-            nonterminals.add(self._preprocess_nonterminal(production._lhs))
+            nt = self._preprocess_nonterminal(production._lhs)
+            #print(nt)
+            nonterminals.add(nt)
 
-        phrase_tags = ['SBAR', 'PRT', 'PNP', 'INTJ', 'ADJP']
         phrase_vect = []
-        for i, tag in enumerate(phrase_tags):
+        for i, tag in enumerate(PHRASE_TAGS):
             if tag in nonterminals:
                 phrase_vect.append(1)
             else:
@@ -250,7 +254,7 @@ class PTB(Dataset):
 
         # now, finish things up by adding start/end tags
         t1 = time.time()
-        empty_count = 0 # keeps track of sentences with no phrase tags
+        tag_count = np.zeros(len(PHRASE_TAGS))
         for i, words in enumerate(preprocessed_sentences):
 
             inputs = ['<sos>'] + words
@@ -268,9 +272,7 @@ class PTB(Dataset):
             inputs = [self.w2i.get(w, self.w2i['<unk>']) for w in inputs]
             target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
 
-            # keep track of sentences with no phrase tags...
-            if np.sum(phrase_tags[i]) == 0:
-                empty_count += 1
+            tag_count += phrase_tags[i]
 
             data[i]['input'] = inputs
             data[i]['target'] = target
@@ -279,7 +281,8 @@ class PTB(Dataset):
 
         t2 = time.time()
         print('sentences loaded into dict in {} sec'.format(i, n_end, t2-t1))
-        print('{} sentences have no matching phrase tags'.format(empty_count))
+        for i, tag in enumerate(PHRASE_TAGS):
+            print('+ tag {}, n={}'.format(tag, tag_count[i]))
 
         with io.open(os.path.join(self.data_dir, self.data_file), 'wb') as data_file:
             data = json.dumps(data, ensure_ascii=False)

@@ -14,14 +14,14 @@ class Linear(nn.Module):
 		return self.batch_norm(out)
 
 
-class Actor:
-	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=5, conditional_version=True):
+class Actor(nn.Module):
+	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=6, conditional_version=True):
 		"""
 		Actor feed-forward network G(z) (figure 12a in the paper).
 		:param dim_z: dimension of the VAE's latent vector.
 		:param dim_model: number of units in the layers.
 		:param num_layers: number of layers.
-		:param num_labels: number of attribute labels to condition on. 
+		:param num_labels: number of attribute labels to condition on.
 		:param conditional_version: True if conditioning on attribute labels to compute G(z,y).
 		"""
 		super(Actor, self).__init__()
@@ -58,14 +58,14 @@ class Actor:
 		return z_prime
 
 
-class Critic:
+class Critic(nn.Module):
 	def __init__(self, dim_z, dim_model, num_layers=4, num_outputs=1, num_labels=5, conditional_version=True):
 		"""
 		Critic feed-forward network D(z) (figure 12b in the paper).
 		:param dim_z: dimension of the VAE's latent vector.
 		:param dim_model: number of units in the layers.
 		:param num_layers: number of layers.
-		:param num_labels: number of attribute labels to condition on. 
+		:param num_labels: number of attribute labels to condition on.
 		:param conditional_version: True if conditioning on attribute labels to compute D(z,y).
 		"""
 		super(Critic, self).__init__()

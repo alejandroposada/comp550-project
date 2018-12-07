@@ -13,7 +13,6 @@ from multiprocessing import cpu_count
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    args = parser.parse_args()
     parser.add_argument('--data_dir', type=str, default='data')
     parser.add_argument('--create_data', action='store_true')
     parser.add_argument('--max_sequence_length', type=int, default=60)
@@ -86,27 +85,31 @@ if __name__ == '__main__':
         )
     checkpoint = torch.load(args.vae_path)
     vae_model.load_state_dict(checkpoint)
+    vae_model.cuda() # TODO to.(self.device)
 
-    actor = Actor(dim_z=args.embedding_size,
+    actor = Actor(dim_z=args.latent_size,
                   dim_model=2048,
                   num_labels=num_tags)
+    actor.cuda() # TODO: to(self.device)
 
-    real_critic = Critic(dim_z=args.embedding_size,
+    real_critic = Critic(dim_z=args.latent_size,
                          dim_model=2048,
                          num_labels=num_tags,
                          conditional_version=True)
+    real_critic.cuda()
 
-    attr_critic = Critic(dim_z=args.embedding_size,
+    attr_critic = Critic(dim_z=args.latent_size,
                          dim_model=2048,
                          num_labels=num_tags,
                          num_outputs=num_tags,
                          conditional_version=True)
+    attr_critic.cuda()
 
     ac_trainer = AC_Trainer(vae_model=vae_model,
                             actor=actor,
                             real_critic=real_critic,
                             attr_critic=attr_critic,
-                            num_epochs=args.num_epochs,
+                            num_epochs=args.epochs,
                             trainDataLoader=trainDataLoader,
                             valDataLoader=validDataLoader)
 
