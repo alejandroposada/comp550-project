@@ -86,20 +86,23 @@ if __name__ == '__main__':
     vae_model.load_state_dict(checkpoint)
     vae_model.cuda() # TODO to.(self.device)
 
-    actor = Actor(dim_z=args.embedding_size,
+    actor = Actor(dim_z=args.latent_size,
                   dim_model=2048,
                   num_labels=num_tags)
+    actor.cuda() # TODO: to(self.device)
 
-    real_critic = Critic(dim_z=args.embedding_size,
+    real_critic = Critic(dim_z=args.latent_size,
                          dim_model=2048,
                          num_labels=num_tags,
                          conditional_version=True)
+    real_critic.cuda()
 
-    attr_critic = Critic(dim_z=args.embedding_size,
+    attr_critic = Critic(dim_z=args.latent_size,
                          dim_model=2048,
                          num_labels=num_tags,
                          num_outputs=num_tags,
                          conditional_version=True)
+    attr_critic.cuda()
 
     ac_trainer = AC_Trainer(vae_model=vae_model,
                             actor=actor,

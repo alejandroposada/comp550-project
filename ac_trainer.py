@@ -91,6 +91,8 @@ class AC_Trainer:
             labels.requires_grad = False
             fake_attributes.requires_grad = True
 
+            labels = labels.float()
+
             self.real_critic.zero_grad()
 
             # We train D by sampling from p(z) at a rate 10 times less than G(p(z))
