@@ -72,6 +72,8 @@ class AC_Trainer:
 
             labels = batch['phrase_tags']
             labels = labels.to(self.device)
+            batch_input = batch['input'].to(self.device)
+            # :( batch_length = batch['length'].to(self.device)
 
             self.iteration += 1
             iteration += 1
@@ -82,11 +84,11 @@ class AC_Trainer:
             fake_attributes = self.get_fake_attributes(batch_size).to(self.device)
 
             with torch.no_grad():
-                _, _, logv, real_z = self.vae_model(batch['input'], batch['length'])
+                _, _, logv, real_z = self.vae_model(batch_input, batch['length'])
 
             fake_z_prior.requires_grad = True
             real_z.requires_grad = True
-            labels.requires_grad = True
+            labels.requires_grad = False
             fake_attributes.requires_grad = True
 
             self.real_critic.zero_grad()
@@ -175,7 +177,7 @@ class AC_Trainer:
     def get_label_matrix(self, dataloader):
         # create a subscriptable numpy array of tags
         tags = []
-        for item in dataloader.dataset.data.items():
+        for item in dataloader.dataset.data.values():
             tags.append(item['tags'])
         tags = np.vstack(tags)
 

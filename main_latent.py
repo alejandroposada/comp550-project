@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 from model import SentenceVAE
 from ptb import PTB
@@ -11,7 +13,6 @@ from multiprocessing import cpu_count
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    args = parser.parse_args()
     parser.add_argument('--data_dir', type=str, default='data')
     parser.add_argument('--create_data', action='store_true')
     parser.add_argument('--max_sequence_length', type=int, default=60)
@@ -83,6 +84,7 @@ if __name__ == '__main__':
         )
     checkpoint = torch.load(args.vae_path)
     vae_model.load_state_dict(checkpoint)
+    vae_model.cuda() # TODO to.(self.device)
 
     actor = Actor(dim_z=args.embedding_size,
                   dim_model=2048,
@@ -103,7 +105,7 @@ if __name__ == '__main__':
                             actor=actor,
                             real_critic=real_critic,
                             attr_critic=attr_critic,
-                            num_epochs=args.num_epochs,
+                            num_epochs=args.epochs,
                             trainDataLoader=trainDataLoader,
                             valDataLoader=validDataLoader)
 
