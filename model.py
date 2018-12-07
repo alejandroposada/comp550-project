@@ -68,7 +68,7 @@ class SentenceVAE(nn.Module):
         return(x, x_embed, self.hidden2mean(hidden), self.hidden2logv(hidden))
 
 
-    def reparameterize(self, bs, mean, logv):
+    def reparameterize(self, batch_size, mean, logv):
         """
         uses mean + log variance to generate samples from a gaussian
         parameterized by those values
@@ -80,7 +80,7 @@ class SentenceVAE(nn.Module):
         return(z)
 
 
-    def decoder(self, x, x_embed, z, sorted_lengths):
+    def decoder(self, x, x_embed, z, sorted_lengths, sorted_idx):
         """decodes a sentence from a set of samples """
         bs = x.size(0)
         hidden = self.latent2hidden(z)
@@ -116,7 +116,7 @@ class SentenceVAE(nn.Module):
         x_tilde = rnn_utils.pad_packed_sequence(x_tilde, batch_first=True)[0]
         x_tilde = x_tilde.contiguous()
         _, reversed_idx = torch.sort(sorted_idx)
-        padded_outputs = padded_outputs[reversed_idx]
+        x_tilde = x_tilde[reversed_idx]
         b, s, _ = x_tilde.size()
 
         # project outputs to vocab
@@ -131,7 +131,7 @@ class SentenceVAE(nn.Module):
 
         batch_size = input_seq.size(0)
         sorted_lengths, sorted_idx = torch.sort(length, descending=True)
-        input_seq = input_sequence[sorted_idx]
+        input_seq = input_seq[sorted_idx]
 
         x, x_embed, mean, logvar = self.encoder(input_seq, sorted_lengths)
         z = self.reparameterize(batch_size, mean, logvar)
