@@ -12,7 +12,7 @@ class Linear(nn.Module):
 	def forward(self, x):
 		out = self.linear(x)
 		return self.batch_norm(out)
-
+#tabs
 
 class Actor(nn.Module):
     def __init__(self, dim_z, dim_model, num_layers=4, num_labels=5, conditional_version=True):
