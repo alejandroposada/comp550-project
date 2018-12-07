@@ -6,6 +6,7 @@ import torch
 import argparse
 
 from model import SentenceVAE
+from actor_critic import Actor
 from utils import to_var, idx2word, interpolate
 
 
@@ -15,6 +16,12 @@ def main(args):
         vocab = json.load(file)
 
     w2i, i2w = vocab['w2i'], vocab['i2w']
+
+    if not os.path.exists(args.load_vae):
+        raise FileNotFoundError(args.load_vae)
+
+    if not os.path.exists(args.load_actor):
+        raise FileNotFoundError(args.load_actor)
 
     model = SentenceVAE(
         vocab_size=len(w2i),
@@ -33,33 +40,66 @@ def main(args):
         bidirectional=args.bidirectional
         )
 
-    if not os.path.exists(args.load_checkpoint):
-        raise FileNotFoundError(args.load_checkpoint)
-
-    model.load_state_dict(torch.load(args.load_checkpoint, map_location=lambda storage, loc: storage))
-    print("Model loaded from %s"%(args.load_checkpoint))
-
-    if torch.cuda.is_available():
-        model = model.cuda()
+    model.load_state_dict(
+        torch.load(args.load_vae, map_location=lambda storage, loc: storage))
+    print("vae model loaded from %s"%(args.load_vae))
 
     model.eval()
 
+    if args.constraint_mode:
+        actor = Actor(dim_z=args.latent_size,
+                      dim_model=2048,
+                      num_labels=args.n_tags)
+        model.load_state_dict(
+            torch.load(args.load_actor, map_location=lambda storage, loc:storage))
+        print("actor model loaded from %s"%(args.load_vae))
+
+        actor.eval()
+
+    if torch.cuda.is_available():
+        model = model.cuda()
+        actor = actor.cuda() # TODO: to(self.devices)
+
+    # get samples from the prior
     samples, z = model.inference(n=args.num_samples)
-    print('----------SAMPLES----------')
-    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+
+
+    # take z and manipulate them using the actor to generate z_prime
+    if args.condition_mode:
+        labels = torch.Tensor([0,0,1,0,0,0])
+        z_prime = actor.forward(z, labels)
+        samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
+
+    print('*** SAMPLES ***')
+    print('+ z: {}'.format(
+        *idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+
+    if args.conditon_mode:
+        print('+ z_prime: {}'.format(
+            *idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
 
     z1 = torch.randn([args.latent_size]).numpy()
     z2 = torch.randn([args.latent_size]).numpy()
     z = to_var(torch.from_numpy(interpolate(start=z1, end=z2, steps=8)).float())
     samples, _ = model.inference(z=z)
-    print('-------INTERPOLATION-------')
-    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+
+    if args.condition_mode:
+        z_prime = actor.forward(z, labels)
+        samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
+
+    print('*** INTERPOLATION ***')
+    print('+ z: {}'.format(
+        *idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+    if args.condition_mode:
+        print('+ z_prime: {}'.format(
+            *idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-c', '--load_checkpoint', type=str)
+    parser.add_argument('-c', '--load_vae', type=str)
     parser.add_argument('-n', '--num_samples', type=int, default=10)
 
     parser.add_argument('-dd', '--data_dir', type=str, default='data')
@@ -73,6 +113,11 @@ if __name__ == '__main__':
     parser.add_argument('-nl', '--num_layers', type=int, default=1)
     parser.add_argument('-bi', '--bidirectional', action='store_true')
 
+    # conditional specific stuff
+    parser.add_argument('-t',  '--n_tags', type=int, default=6)
+    parser.add_argument('-cm', '--constraint_mode', action='store_true')
+    parser.add_argument('-ca', '--load_actor', type=str)
+
     args = parser.parse_args()
 
     args.rnn_type = args.rnn_type.lower()
@@ -81,3 +126,4 @@ if __name__ == '__main__':
     assert 0 <= args.word_dropout <= 1
 
     main(args)
+
