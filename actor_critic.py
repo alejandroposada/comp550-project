@@ -15,15 +15,15 @@ class Linear(nn.Module):
 
 
 class Actor(nn.Module):
-    def __init__(self, dim_z, dim_model, num_layers=4, num_labels=5, conditional_version=True):
-        """
-        Actor feed-forward network G(z) (figure 12a in the paper).
-        :param dim_z: dimension of the VAE's latent vector.
-        :param dim_model: number of units in the layers.
-        :param num_layers: number of layers.
-        :param num_labels: number of attribute labels to condition on.
-        :param conditional_version: True if conditioning on attribute labels to compute G(z,y).
-        """
+	def __init__(self, dim_z, dim_model, num_layers=4, num_labels=5, conditional_version=True):
+		"""
+		Actor feed-forward network G(z) (figure 12a in the paper).
+		:param dim_z: dimension of the VAE's latent vector.
+		:param dim_model: number of units in the layers.
+		:param num_layers: number of layers.
+		:param num_labels: number of attribute labels to condition on.
+		:param conditional_version: True if conditioning on attribute labels to compute G(z,y).
+		"""
 		super(Actor, self).__init__()
 		self.dim_z = dim_z
 		self.dim_model = dim_model
@@ -48,15 +48,15 @@ class Actor(nn.Module):
 		layers.append(Linear(self.dim_model, 2 * self.dim_z))
 		self.layers = nn.Sequential(*layers)
 
-    def forward(self, x, label):
-        z = x
-        import IPython; IPython.embed()
-        x = torch.cat((x, self.cond_layer(label)), dim=-1)
-        o = self.layers(x)
-        gate_input, dz = o.chunk(2, dim=-1)  # Half of the inputs are used as dz and the other half as gates
-        gates = self.gate(gate_input)
-        z_prime = (1 - gates) * z + gates * dz
-        return z_prime
+	def forward(self, x, label):
+		z = x
+		import IPython; IPython.embed()
+		x = torch.cat((x, self.cond_layer(label)), dim=-1)
+		o = self.layers(x)
+		gate_input, dz = o.chunk(2, dim=-1)  # Half of the inputs are used as dz and the other half as gates
+		gates = self.gate(gate_input)
+		z_prime = (1 - gates) * z + gates * dz
+		return z_prime
 
 
 class Critic(nn.Module):
