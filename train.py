@@ -148,7 +148,7 @@ def main(args):
 
                 if iteration % args.print_every == 0 or iteration+1 == len(data_loader):
                     print("%s Batch %04d/%i, Loss %9.4f, NLL-Loss %9.4f, KL-Loss %9.4f, KL-Weight %6.3f"
-                        %(split.upper(), iteration, len(data_loader)-1, loss.item(), NLL_loss.item()/batch_size, KL_loss.item()/batch_size, KL_weight))
+                          %(split.upper(), iteration, len(data_loader)-1, loss.item(), NLL_loss.item()/batch_size, KL_loss.item()/batch_size, KL_weight))
 
                 if split == 'valid':
                     if 'target_sents' not in tracker:

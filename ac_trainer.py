@@ -1,9 +1,9 @@
-from tqdm import tqdm as tqdm
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from tensorboardX import SummaryWriter
+from tqdm import tqdm as tqdm
 
 
 class AC_Trainer:
@@ -15,7 +15,7 @@ class AC_Trainer:
         self.attr_critic = attr_critic
 
         self.train_labels = self.get_label_matrix(trainDataLoader)
-        self.valid_labels = self.get_label_matrix(valDataloader)
+        self.valid_labels = self.get_label_matrix(valDataLoader)
 
         self.start_epoch = 1
 
@@ -159,6 +159,14 @@ class AC_Trainer:
                            total_real_loss / iteration, epoch)
         print("[+] Epoch:[{}/{}] train actor average loss :{}".format(epoch, self.num_epochs, train_loss))
 
+    def get_label_matrix(self, dataloader):
+        # create a subscriptable tensor of tags
+        tags = []
+        for item in dataloader.dataset.data.values():
+            tags.append(item['tags'])
+        tags = np.vstack(tags)
+        return tags
+
     def re_allocate(self, data):
         new_data = data.detach()
         new_data.requires_grad = True
@@ -188,11 +196,11 @@ class AC_Trainer:
             self.tensorboad_writer.add_histogram('actor/' + name + '/grad', param.grad.clone().cpu().data.numpy(),
                                                  iteration, bins='sturges')
 
-    def get_fake_attributes(self, batch_size, num_labels=5):
+    def get_fake_attributes(self, batch_size):
         start = np.random.randint(self.n_train - batch_size - 1)
-        labels = self.train_labels[start:start + batch_size]
+        fake_attr = self.train_labels[start:start + batch_size]
+        return torch.FloatTensor(fake_attr)
 
-        return torch.FloatTensor(labels)
 
     def _set_label_type(self):
 
