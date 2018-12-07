@@ -57,15 +57,12 @@ with the following fields:
 
 [See here for all the details.](http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html#X)
 
-Possibilities:
-
-+ CONJP - Conjunction Phrase.
-+ INTJ - Interjection. Corresponds approximately to the part-of-speech tag UH.
-+ QP - Quantifier Phrase (i.e. complex measure/amount phrase); used within NP.
-+ WHNP - Wh-noun Phrase. Introduces a clause with an NP gap. May be null
-  (containing the 0 complementizer) or lexical, containing some wh-word, e.g.
-  who, which book, whose daughter, none of which, or how many leopards.
-
++ `SBAR Clause introduced by subordinating conjugation n=21612`
++ `PP   Prepositional phrase                           n=36143`
++ `ADJP Adjective phrase                               n=11738`
++ `QP   Quantifier phrase                              n=7043`
++ `WHNP Wh-noun phrase                                 n=8429`
++ `ADVP Adverb phrase                                  n=17321`
 
 ![Model Architecture](https://github.com/timbmg/Sentence-VAE/blob/master/figs/model.png "Model Architecture")
 _Note: This implementation does not support LSTM's at the moment, but RNN's and GRU's._
