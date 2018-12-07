@@ -39,19 +39,30 @@ viterbi      = 923.90 sec for 48 words
 shift reduce = 2.54   sec for 48 words
 ```
 
+**dataset interaction**
+
+`datasets['train'][0]` returns a dict of sentence 0 from 'train' (vs 'valid')
+with the following fields:
+
++ `input`: numpy array of words in int form,
++ `input_str`: list of the words (preprocessed)
++ `input_tag`: list of the POS tags (maybe not required),
++ `target`: numpt array of the words in int form,
++ `target_str`: list of the words (preprocessed),
++ `target_tag`: list of the POS tags (maybe not required),
++ `length`: length of the input sentence in tokens
++ `phrase_tags`: binary vector of the phrase-level tags `['SBAR', 'PRT', 'PNP', 'INTJ', 'ADJP']`
+
 **penn treebank tags**
 
 [See here for all the details.](http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html#X)
 
-Possibilities:
-
-+ CONJP - Conjunction Phrase.
-+ INTJ - Interjection. Corresponds approximately to the part-of-speech tag UH.
-+ QP - Quantifier Phrase (i.e. complex measure/amount phrase); used within NP.
-+ WHNP - Wh-noun Phrase. Introduces a clause with an NP gap. May be null
-  (containing the 0 complementizer) or lexical, containing some wh-word, e.g.
-  who, which book, whose daughter, none of which, or how many leopards.
-
++ `SBAR Clause introduced by subordinating conjugation n=21612`
++ `PP   Prepositional phrase                           n=36143`
++ `ADJP Adjective phrase                               n=11738`
++ `QP   Quantifier phrase                              n=7043`
++ `WHNP Wh-noun phrase                                 n=8429`
++ `ADVP Adverb phrase                                  n=17321`
 
 ![Model Architecture](https://github.com/timbmg/Sentence-VAE/blob/master/figs/model.png "Model Architecture")
 _Note: This implementation does not support LSTM's at the moment, but RNN's and GRU's._

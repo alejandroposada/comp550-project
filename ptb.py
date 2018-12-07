@@ -1,14 +1,20 @@
-import os
+from collections import defaultdict
+from multiprocessing import Pool
+from nltk.corpus import ptb, treebank
+from string import punctuation as PUNCTUATION
+from torch.utils.data import Dataset
+from utils import OrderedCounter
 import io
 import json
-import torch
-import numpy as np
-from collections import defaultdict
-from torch.utils.data import Dataset
 import nltk
-#from nltk.tokenize import TweetTokenizer
+import numpy as np
+import os
+import sys
+import time
+import torch
 
-from utils import OrderedCounter
+# http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html
+PHRASE_TAGS = ['SBAR', 'PP', 'ADJP', 'QP', 'WHNP' , 'ADVP']
 
 class PTB(Dataset):
 
@@ -42,7 +48,6 @@ class PTB(Dataset):
 
     def __getitem__(self, idx):
         idx = str(idx)
-
         return {
             'input': np.asarray(self.data[idx]['input']),
             'input_str': self._get_str(self.data[idx]['input']),
@@ -50,7 +55,8 @@ class PTB(Dataset):
             'target': np.asarray(self.data[idx]['target']),
             'target_str': self._get_str(self.data[idx]['target']),
             'target_tag': self._get_tag(self.data[idx]['target']),
-            'length': self.data[idx]['length']
+            'length': self.data[idx]['length'],
+            'phrase_tags': np.asarray(self.data[idx]['tags'])
         }
 
 
@@ -130,7 +136,66 @@ class PTB(Dataset):
         self.w2i, self.i2w = vocab['w2i'], vocab['i2w']
 
 
+    def _is_number(self, string):
+        try:
+            float(string)
+            return(True)
+        except:
+            return(False)
+
+
+    def _is_key(self, dictionary, key):
+        try:
+            dictionary[key]
+            return(True)
+        except:
+            return(False)
+
+
+    def _preprocess(self, words):
+        """removes punctuation, changes numbers to N, and non-vocab to <unk>"""
+        output = []
+        for word in words:
+            if word in PUNCTUATION:
+                pass
+            elif self._is_number(word):
+                output.append('N')
+            elif not self._is_key(self.w2i, word.lower()):
+                output.append('<unk>')
+            else:
+                output.append(word.lower())
+
+        return(output)
+
+
+    def _preprocess_nonterminal(self, item):
+        """removes all tags"""
+        return(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0])
+
+
+    def _get_phrase_tags(self, parse):
+        nonterminals = set()
+        for production in parse.productions():
+            nt = self._preprocess_nonterminal(production._lhs)
+            #print(nt)
+            nonterminals.add(nt)
+
+        phrase_vect = []
+        for i, tag in enumerate(PHRASE_TAGS):
+            if tag in nonterminals:
+                phrase_vect.append(1)
+            else:
+                phrase_vect.append(0)
+
+        return(phrase_vect)
+
+
     def _create_data(self):
+
+        # hard coding of the number of samples for train and valid
+        # n_train = 42069
+        # n_valid = 7139
+        # n_total = 49208
 
         if self.split == 'train':
             self._create_vocab()
@@ -138,35 +203,86 @@ class PTB(Dataset):
             self._load_vocab()
 
         #tokenizer = TweetTokenizer(preserve_case=False)
+        # we build the dataset by looping through these inds of parsed_sents()
+        if self.split == 'train':
+            n_begin = 0
+            n_end = 42069
+        else:
+            n_begin = 42069
+            n_end = 49208
 
         data = defaultdict(dict)
-        with open(self.raw_data_path, 'r') as file:
 
-            for i, line in enumerate(file):
+        # collect all treebank sentences and nonterminals for multi-processing
+        t1 = time.time()
+        all_sentences = ptb.sents()
+        all_sentences = all_sentences[n_begin:n_end]
+        all_parses = ptb.parsed_sents()
+        all_parses = all_parses[n_begin:n_end]
+        t2 = time.time()
+        print('read all sentences in {} sec'.format(t2-t1))
 
-                #words = tokenizer.tokenize(line)
-                #words = nltk.word_tokenize(line)
-                words = line.split()
+        # preprocess all sentences in paralell
+        pool = Pool() # required for multicore
+        try:
+            t1 = time.time()
+            preprocessed_sentences = pool.map_async(
+                self._preprocess, all_sentences).get(9999999)
+            pool.close()
+            t2 = time.time()
+            print('preprocessed all sentences in {} min'.format((t2-t1)/60.0))
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            sys.exit(1)
 
-                input = ['<sos>'] + words
-                input = input[:self.max_sequence_length]
 
-                target = words[:self.max_sequence_length-1]
-                target = target + ['<eos>']
+        # get all phrase tags in paralell
+        pool = Pool()
+        try:
+            t1 = time.time()
+            phrase_tags = pool.map_async(
+                self._get_phrase_tags, all_parses).get(9999999)
+            pool.close()
+            t2 = time.time()
+            print('phrase tags for all sentences collected in {} min'.format(
+                (t2-t1)/60.0))
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            sys.exit(1)
 
-                assert len(input) == len(target), "%i, %i"%(len(input), len(target))
-                length = len(input)
+        # now, finish things up by adding start/end tags
+        t1 = time.time()
+        tag_count = np.zeros(len(PHRASE_TAGS))
+        for i, words in enumerate(preprocessed_sentences):
 
-                input.extend(['<pad>'] * (self.max_sequence_length-length))
-                target.extend(['<pad>'] * (self.max_sequence_length-length))
+            inputs = ['<sos>'] + words
+            inputs = inputs[:self.max_sequence_length]
 
-                input = [self.w2i.get(w, self.w2i['<unk>']) for w in input]
-                target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
+            target = words[:self.max_sequence_length-1]
+            target = target + ['<eos>']
 
-                id = len(data)
-                data[id]['input'] = input
-                data[id]['target'] = target
-                data[id]['length'] = length
+            assert len(inputs) == len(target), "%i, %i"%(len(inputs), len(target))
+            length = len(inputs)
+
+            inputs.extend(['<pad>'] * (self.max_sequence_length-length))
+            target.extend(['<pad>'] * (self.max_sequence_length-length))
+
+            inputs = [self.w2i.get(w, self.w2i['<unk>']) for w in inputs]
+            target = [self.w2i.get(w, self.w2i['<unk>']) for w in target]
+
+            tag_count += phrase_tags[i]
+
+            data[i]['input'] = inputs
+            data[i]['target'] = target
+            data[i]['length'] = length
+            data[i]['tags'] = phrase_tags[i]
+
+        t2 = time.time()
+        print('sentences loaded into dict in {} sec'.format(i, n_end, t2-t1))
+        for i, tag in enumerate(PHRASE_TAGS):
+            print('+ tag {}, n={}'.format(tag, tag_count[i]))
 
         with io.open(os.path.join(self.data_dir, self.data_file), 'wb') as data_file:
             data = json.dumps(data, ensure_ascii=False)
