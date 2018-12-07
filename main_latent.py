@@ -55,6 +55,7 @@ if __name__ == '__main__':
                                 num_workers=cpu_count(),
                                 pin_memory=torch.cuda.is_available()
                                 )
+
     validDataLoader = DataLoader(
                                 dataset=datasets['valid'],
                                 batch_size=args.batch_size,

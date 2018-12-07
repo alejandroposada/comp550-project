@@ -1,3 +1,8 @@
 #!/bin/bash
 
-./inference.py --load_checkpoint /u/vivianoj/data/2018-Nov-25-18:41:05/E99.pytorch -n 100
+./inference.py \
+    --load_vae model/E19.pytorch \
+    --load_actor save_model/actor_model49.path.tar \
+    --constraint_mode \
+    -n 100
+
