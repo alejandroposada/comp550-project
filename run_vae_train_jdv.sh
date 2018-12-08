@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./train.py -bin /u/vivianoj/data -ep 20 -tb
+./train.py -bin /home/jdv/pytorch -ep 100 -tb -wd 0.25
