@@ -50,7 +50,7 @@ def main(args):
         actor = Actor(dim_z=args.latent_size,
                       dim_model=2048,
                       num_labels=args.n_tags)
-        model.load_state_dict(
+        actor.load_state_dict(
             torch.load(args.load_actor, map_location=lambda storage, loc:storage))
         print("actor model loaded from %s"%(args.load_vae))
 
@@ -63,36 +63,33 @@ def main(args):
     # get samples from the prior
     samples, z = model.inference(n=args.num_samples)
 
-
     # take z and manipulate them using the actor to generate z_prime
-    if args.condition_mode:
-        labels = torch.Tensor([0,0,1,0,0,0])
+    if args.constraint_mode:
+        labels = torch.Tensor([0,0,0,1,0,0]).repeat(args.num_samples, 1).cuda()
         z_prime = actor.forward(z, labels)
         samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
 
-    print('*** SAMPLES ***')
-    print('+ z: {}'.format(
-        *idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+    print('*** SAMPLES Z: ***')
+    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
 
-    if args.conditon_mode:
-        print('+ z_prime: {}'.format(
-            *idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+    if args.constraint_mode:
+        print('*** SAMPLES Z_PRIME: ***')
+        print(*idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
 
     z1 = torch.randn([args.latent_size]).numpy()
     z2 = torch.randn([args.latent_size]).numpy()
-    z = to_var(torch.from_numpy(interpolate(start=z1, end=z2, steps=8)).float())
+    z = to_var(torch.from_numpy(interpolate(start=z1, end=z2, steps=args.num_samples-2)).float())
     samples, _ = model.inference(z=z)
 
-    if args.condition_mode:
+    if args.constraint_mode:
         z_prime = actor.forward(z, labels)
         samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
 
-    print('*** INTERPOLATION ***')
-    print('+ z: {}'.format(
-        *idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
-    if args.condition_mode:
-        print('+ z_prime: {}'.format(
-            *idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n'))
+    print('*** INTERP Z: ***')
+    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+    if args.constraint_mode:
+        print('*** INTERP Z_PRIME: ***')
+        print(*idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
 
 
 if __name__ == '__main__':
