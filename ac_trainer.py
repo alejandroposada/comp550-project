@@ -131,10 +131,7 @@ class AC_Trainer:
                 fake_z_prior.requires_grad = True
 
                 actor_g = self.actor(fake_z_prior, actor_labels)
-                real_g = self.actor(real_z, actor_labels)
-
                 zg_critic_out = self.real_critic(actor_g, actor_labels)
-                zg_critic_real = self.real_critic(real_g, actor_labels)
 
                 weight_var = torch.mean(logv, 0, True)  # TODO: might have to use sigma**2 instead of logv
                 dist_penalty = torch.mean(
@@ -142,10 +139,10 @@ class AC_Trainer:
                 dist_penalty = dist_penalty + torch.mean(
                     torch.sum((1 + (real_g - real_z).pow(2)).log() * weight_var.pow(-2), 1), 0)
 
-                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth,
-                                                    size_average=False) + F.binary_cross_entropy(zg_critic_real,
-                                                                                                 actor_truth,
-                                                                                                 size_average=False) + dist_penalty
+                # real_g = self.actor(real_z, actor_labels)
+                # zg_critic_real = self.real_critic(real_g, actor_labels)
+                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + dist_penalty
+                  # + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False)
 
                 actor_loss.backward()
                 total_actor_loss += actor_loss.item()
