@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils import spectral_norm
 
 
-class Linear(nn.Module):
+class LinearBatch(nn.Module):
 	def __init__(self, input_dim, output_dim, bias=True):
 		super(Linear, self).__init__()
 		self.linear = nn.Linear(input_dim, output_dim, bias=bias)
@@ -12,6 +13,17 @@ class Linear(nn.Module):
 	def forward(self, x):
 		out = self.linear(x)
 		return self.batch_norm(out)
+
+
+class LinearSpec(nn.Module):
+	def __init__(self, input_dim, output_dim, bias=True):
+		super(Linear, self).__init__()
+		self.linear = nn.Linear(input_dim, output_dim, bias=bias)
+        self.spec_norm = spectral_norm(output_dim)
+
+	def forward(self, x):
+		out = self.linear(x)
+        return self.spec_norm(out)
 
 
 class Actor(nn.Module):
@@ -33,19 +45,19 @@ class Actor(nn.Module):
 		self.gate = nn.Sigmoid()
 		if self.conditional_version:
 			self.num_labels = num_labels
-			self.cond_layer = Linear(num_labels, dim_model)
+			self.cond_layer = LinearBatch(num_labels, dim_model)
 
 		layers = []
 
 		# In the cond. version, the labels are passed through a linear layer and are concatenated with z as the input
 		input_dim = self.dim_z + self.dim_model if self.conditional_version else self.dim_z
-		layers.append(Linear(input_dim, self.dim_model))
+		layers.append(LinearBatch(input_dim, self.dim_model))
 		layers.append(nn.ReLU())
 
 		for i in range(num_layers - 1):
-			layers.append(Linear(self.dim_model, self.dim_model))
+			layers.append(LinearBatch(self.dim_model, self.dim_model))
 			layers.append(nn.ReLU())
-		layers.append(Linear(self.dim_model, 2 * self.dim_z))
+		layers.append(LinearBatch(self.dim_model, 2 * self.dim_z))
 		self.layers = nn.Sequential(*layers)
 
 	def forward(self, x, label):
@@ -59,7 +71,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-	def __init__(self, dim_z, dim_model, num_layers=4, num_outputs=1, num_labels=5, conditional_version=True):
+	def __init__(self, dim_z, dim_model, num_layers=4, num_outputs=1, num_labels=6, conditional_version=True):
 		"""
 		Critic feed-forward network D(z) (figure 12b in the paper).
 		:param dim_z: dimension of the VAE's latent vector.
@@ -77,19 +89,19 @@ class Critic(nn.Module):
 		self.gate = nn.Sigmoid()
 		if self.conditional_version:
 			self.num_labels = num_labels
-			self.cond_layer = Linear(num_labels, dim_model)
+			self.cond_layer = LinearSpec(num_labels, dim_model)
 
 		layers = []
 
 		# In the cond. version, the labels are passed through a linear layer and are concatenated with z as the input
 		input_dim = self.dim_z + self.dim_model if self.conditional_version else self.dim_z
-		layers.append(Linear(input_dim, self.dim_model))
+		layers.append(LinearSpec(input_dim, self.dim_model))
 		layers.append(nn.ReLU())
 
 		for i in range(num_layers - 1):
-			layers.append(Linear(self.dim_model, self.dim_model))
+			layers.append(LinearSpec(self.dim_model, self.dim_model))
 			layers.append(nn.ReLU())
-		layers.append(Linear(self.dim_model, num_outputs))
+		layers.append(LinearSpec(self.dim_model, num_outputs))
 		self.layers = nn.Sequential(*layers)
 
 	def forward(self, x, label=None):
