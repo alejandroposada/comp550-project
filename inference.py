@@ -58,7 +58,9 @@ def main(args):
 
     if torch.cuda.is_available():
         model = model.cuda()
-        actor = actor.cuda() # TODO: to(self.devices)
+        if args.constraint_mode:
+            actor = actor.cuda() # TODO: to(self.devices)
+
 
     # get samples from the prior
     samples, z = model.inference(n=args.num_samples)
