@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA')
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--vae_path', type=str, default=None)   # TODO:default path
 
     args = parser.parse_args()

@@ -141,11 +141,8 @@ class AC_Trainer:
 
                 real_g = self.actor(real_z, actor_labels)
                 zg_critic_real = self.real_critic(real_g, actor_labels)
-                actor_loss = F.binary_cross_entropy(
-                                 zg_critic_out, actor_truth, size_average=False) +
-                             F.binary_cross_entropy(
-                                 zg_critic_real, actor_truth, size_average=False) +
-                             dist_penalty
+                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False)
+                    # + dist_penalty
 
 
                 actor_loss.backward()
