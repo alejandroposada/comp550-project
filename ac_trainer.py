@@ -141,8 +141,7 @@ class AC_Trainer:
                     torch.sum((1 + (real_g - real_z).pow(2)).log() * weight_var.pow(-2), 1), 0)
 
                 zg_critic_real = self.real_critic(real_g, actor_labels)
-                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False)
-                    # + dist_penalty
+                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False) + (0.1 * dist_penalty)
 
 
                 actor_loss.backward()

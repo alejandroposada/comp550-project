@@ -6,7 +6,7 @@ from torch.nn.utils import spectral_norm
 
 class LinearBatch(nn.Module):
     def __init__(self, input_dim, output_dim, bias=True):
-        super(Linear, self).__init__()
+        super(LinearBatch, self).__init__()
         self.linear = nn.Linear(input_dim, output_dim, bias=bias)
         self.batch_norm = nn.BatchNorm1d(output_dim)
 
@@ -17,13 +17,11 @@ class LinearBatch(nn.Module):
 
 class LinearSpec(nn.Module):
     def __init__(self, input_dim, output_dim, bias=True):
-        super(Linear, self).__init__()
-        self.linear = nn.Linear(input_dim, output_dim, bias=bias)
-        self.spec_norm = spectral_norm(output_dim)
+        super(LinearSpec, self).__init__()
+        self.linear = spectral_norm(nn.Linear(input_dim, output_dim, bias=bias))
 
     def forward(self, x):
-        out = self.linear(x)
-        return self.spec_norm(out)
+        return self.linear(x)
 
 
 class Actor(nn.Module):
