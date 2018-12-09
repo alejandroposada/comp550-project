@@ -37,7 +37,7 @@ class AC_Trainer:
         self.tensorboad_writer = SummaryWriter()
 
         self.percentage_prior_fake = 0.10
-        self.N_between_update_G = 1
+        self.N_between_update_G = 10
         #self.N_between_eval = 100
 
     def train(self):
@@ -142,7 +142,6 @@ class AC_Trainer:
 
                 zg_critic_real = self.real_critic(real_g, actor_labels)
                 actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False) + (0.1 * dist_penalty)
-
 
                 actor_loss.backward()
                 total_actor_loss += actor_loss.item()
