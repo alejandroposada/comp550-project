@@ -1,13 +1,114 @@
 #!/usr/bin/env python
 
-import os
-import json
-import torch
-import argparse
-
-from model import SentenceVAE
 from actor_critic import Actor
-from utils import to_var, idx2word, interpolate
+from model import SentenceVAE
+from utils import to_var, idx2word, interpolate, preprocess_nt, PHRASE_TAGS
+import argparse
+import json
+import numpy as np
+import os
+import pickle
+import torch
+from multiprocessing import Pool
+import time
+
+# load parser
+with open('viterbi_parser.pkl', 'rb') as f:
+    PARSER = pickle.loads(f.read())
+
+# labels for conditional generation
+LABELS = [
+    [0,0,0,0,0,0],
+    [1,0,0,0,0,0],
+    [0,1,0,0,0,0],
+    [0,0,1,0,0,0],
+    [0,0,0,1,0,0],
+    [0,0,0,0,1,0],
+    [0,0,0,0,0,1],
+]
+
+LABEL_NAMES = ['NONE']
+LABEL_NAMES.extend(PHRASE_TAGS)
+
+
+def get_parse(sentence, n_elems=14):
+    """parses the input sentence and returns the parse tree"""
+    sentence = sentence.split()
+    if len(sentence) > n_elems:
+        sentence = sentence[:n_elems]
+    else:
+        sentence = sentence[:-1]
+
+    output = list(PARSER.parse(sentence))
+    if output:
+        return(output[0])
+    else:
+        return([])
+
+
+def get_parses(sentences):
+    """runs viterbu in parallel across all sentences submitted"""
+    pool = Pool() # required for multicore
+    try:
+        t1 = time.time()
+        parses = pool.map_async(get_parse, sentences).get(9999999)
+        pool.close()
+        t2 = time.time()
+        print('preprocessed all sentences in {} min'.format((t2-t1)/60.0))
+    except KeyboardInterrupt:
+        pool.terminate()
+        pool.join()
+        sys.exit(1)
+
+    return(parses)
+
+
+def get_productions(productions):
+    """get a preprocessed, string format of the nonterminals in the tree"""
+    tags = []
+    for production in productions:
+        tags.append(preprocess_nt(production._lhs).unicode_repr())
+
+    return(tags)
+
+
+def find_tags_in_parse(phrase_tags, parses):
+    tags = np.zeros((len(parses), len(phrase_tags)))
+    for i, parse in enumerate(parses):
+        productions = get_productions(parse.productions())
+
+        for j, tag in enumerate(PHRASE_TAGS):
+            if tag in productions:
+                tags[i, j] = 1
+
+    return(tags)
+
+
+def remove_bad_samples(samples):
+    """removes sentences that are over 15% <UNK>"""
+    pct_unk = 0.2
+    output_samples = []
+    for sample in samples:
+        tmp = sample.split()[:-1]
+        n_unk = len(np.where(np.array(tmp) == '<unk>')[0])
+        n_all = len(tmp)
+
+        if n_unk/float(n_all) <= 0.2:
+            output_samples.append(sample)
+
+    return(output_samples)
+
+
+def get_sents_and_tags(samples, i2w, w2i):
+    """
+    preprocesses sentences, gets parses, and then returns phrase_tag occourance
+    """
+    samples = idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>'])
+    samples = remove_bad_samples(samples)
+    parses = get_parses(samples)
+    tags = find_tags_in_parse(PHRASE_TAGS, parses)
+
+    return(samples, tags)
 
 
 def main(args):
@@ -15,13 +116,12 @@ def main(args):
     with open(args.data_dir+'/ptb.vocab.json', 'r') as file:
         vocab = json.load(file)
 
+    # required to map between integer-value sentences and real sentences
     w2i, i2w = vocab['w2i'], vocab['i2w']
 
+    # make sure our models for the VAE and Actor exist
     if not os.path.exists(args.load_vae):
         raise FileNotFoundError(args.load_vae)
-
-    if not os.path.exists(args.load_actor):
-        raise FileNotFoundError(args.load_actor)
 
     model = SentenceVAE(
         vocab_size=len(w2i),
@@ -42,56 +142,89 @@ def main(args):
 
     model.load_state_dict(
         torch.load(args.load_vae, map_location=lambda storage, loc: storage))
+    model.eval()
     print("vae model loaded from %s"%(args.load_vae))
 
-    model.eval()
-
+    # to run in constraint mode, we need the trained generator
     if args.constraint_mode:
+        if not os.path.exists(args.load_actor):
+            raise FileNotFoundError(args.load_actor)
+
         actor = Actor(dim_z=args.latent_size,
                       dim_model=2048,
                       num_labels=args.n_tags)
         actor.load_state_dict(
             torch.load(args.load_actor, map_location=lambda storage, loc:storage))
-        print("actor model loaded from %s"%(args.load_vae))
-
         actor.eval()
+        print("actor model loaded from %s"%(args.load_actor))
 
     if torch.cuda.is_available():
         model = model.cuda()
         if args.constraint_mode:
             actor = actor.cuda() # TODO: to(self.devices)
 
-
+    print('*** SAMPLE Z: ***')
     # get samples from the prior
-    samples, z = model.inference(n=args.num_samples)
-
-    # take z and manipulate them using the actor to generate z_prime
-    if args.constraint_mode:
-        labels = torch.Tensor([0,0,0,1,0,0]).repeat(args.num_samples, 1).cuda()
-        z_prime = actor.forward(z, labels)
-        samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
-
-    print('*** SAMPLES Z: ***')
-    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+    sample_sents, z = model.inference(n=args.num_samples)
+    sample_sents, sample_tags = get_sents_and_tags(sample_sents, i2w, w2i)
+    print(sample_sents, sep='\n')
 
     if args.constraint_mode:
-        print('*** SAMPLES Z_PRIME: ***')
-        print(*idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
 
+        print('*** SAMPLE Z_PRIME: ***')
+        # get samples from the prior, conditioned via the actor
+        all_tags_sample_prime = []
+        all_sents_sample_prime = {}
+        for i, condition in enumerate(LABELS):
+
+            # binary vector denoting each of the PHRASE_TAGS
+            labels = torch.Tensor(condition).repeat(args.num_samples, 1).cuda()
+
+            # take z and manipulate using the actor to generate z_prime
+            z_prime = actor.forward(z, labels)
+
+            sample_sents_prime, z_prime = model.inference(
+                z=z_prime, n=args.num_samples)
+            sample_sents_prime, sample_tags_prime = get_sents_and_tags(
+                sample_sents_prime, i2w, w2i)
+            print('conditoned on: {}'.format(condition))
+            print(sample_sents_prime, sep='\n')
+            all_tags_sample_prime.append(sample_tags_prime)
+            all_sents_sample_prime[LABEL_NAMES[i]] = sample_sents_prime
+
+    # get random samples from the latent space
     z1 = torch.randn([args.latent_size]).numpy()
     z2 = torch.randn([args.latent_size]).numpy()
     z = to_var(torch.from_numpy(interpolate(start=z1, end=z2, steps=args.num_samples-2)).float())
-    samples, _ = model.inference(z=z)
-
-    if args.constraint_mode:
-        z_prime = actor.forward(z, labels)
-        samples_prime, z_prime = model.inference(z=z_prime, n=args.num_samples)
 
     print('*** INTERP Z: ***')
-    print(*idx2word(samples, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+    interp_sents, _ = model.inference(z=z)
+    interp_sents, interp_tags = get_sents_and_tags(interp_sents, i2w, w2i)
+    print(interp_sents, sep='\n')
+
     if args.constraint_mode:
         print('*** INTERP Z_PRIME: ***')
-        print(*idx2word(samples_prime, i2w=i2w, pad_idx=w2i['<pad>']), sep='\n')
+        all_tags_interp_prime = []
+        all_sents_interp_prime = {}
+
+        for i, condition in enumerate(LABELS):
+
+            # binary vector denoting each of the PHRASE_TAGS
+            labels = torch.Tensor(condition).repeat(args.num_samples, 1).cuda()
+
+            # z prime conditioned on this particular binary variable
+            z_prime = actor.forward(z, labels)
+
+            interp_sents_prime, z_prime = model.inference(
+                z=z_prime, n=args.num_samples)
+            interp_sents_prime, interp_tags_prime = get_sents_and_tags(
+                interp_sents_prime, i2w, w2i)
+            print('conditoned on: {}'.format(condition))
+            print(interp_sents_prime, sep='\n')
+            all_tags_interp_prime.append(interp_tags_prime)
+            all_sents_interp_prime[LABEL_NAMES[i]] = interp_sents_prime
+
+    import IPython; IPython.embed()
 
 
 if __name__ == '__main__':
@@ -118,9 +251,7 @@ if __name__ == '__main__':
     parser.add_argument('-ca', '--load_actor', type=str)
 
     args = parser.parse_args()
-
     args.rnn_type = args.rnn_type.lower()
-
     assert args.rnn_type in ['rnn', 'lstm', 'gru']
     assert 0 <= args.word_dropout <= 1
 

@@ -11,19 +11,7 @@ import nltk
 import os
 import pickle
 import time
-
-def graveyard():
-    #LC_STRATEGY = [
-    #    LeafInitRule(),
-    #    FilteredBottomUpPredictCombineRule(),
-    #    FilteredSingleEdgeFundamentalRule(),
-    #]
-    #parser = nltk.ChartParser(grammar, LC_STRATEGY, trace=2) # ??? time
-    pass
-
-
-def preprocess(item):
-    return(Nonterminal(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0]))
+from utils import preprocess_nt
 
 
 def is_number(string):
@@ -42,7 +30,7 @@ def is_key(dictionary, key):
         return(False)
 
 
-def main():
+def main(test=False):
     """
     makes a big dumb PTB CFG, and ShiftReduceParser, and a ViterbiParser, and
     serializes them all to disk for future use.
@@ -58,7 +46,7 @@ def main():
     freq_thresh = 0 ## ARBITRARY
     word_freqs = FreqDist(ptb.words())
 
-    if not os.path.isfile('grammar.pkl'):
+    if not os.path.isfile('parsers/grammar.pkl'):
 
         productions = []
         add_dict = {}
@@ -75,14 +63,14 @@ def main():
             for production in these_productions:
 
                 # remove all tags from the LHS (only keep primary tag)
-                production._lhs = preprocess(production._lhs)
+                production._lhs = preprocess_nt(production._lhs)
 
                 rhs = []
                 for item in production._rhs:
 
                     # remove all tags from the Nonterminals on the RHS
                     if type(item) == nltk.grammar.Nonterminal:
-                        rhs.append(preprocess(item))
+                        rhs.append(preprocess_nt(item))
 
                     # replace numbers with N
                     elif is_number(item):
@@ -110,41 +98,42 @@ def main():
         print('** {} productions found! **'.format(len(productions)))
         grammar = induce_pcfg(Nonterminal('S'), productions)
 
-        with open('grammar.pkl', 'wb') as f:
+        with open('parsers/grammar.pkl', 'wb') as f:
             f.write(pickle.dumps(grammar))
 
-    if not os.path.isfile('viterbi_parser.pkl'):
-        filename = open('grammar.pkl', 'rb')
+    if not os.path.isfile('parsers/viterbi_parser.pkl'):
+        filename = open('parsers/grammar.pkl', 'rb')
         grammar = pickle.load(filename)
         viterbi_parser = ViterbiParser(grammar, trace=0) # cubic time
 
-        with open('viterbi_parser.pkl', 'wb') as f:
+        with open('parsers/viterbi_parser.pkl', 'wb') as f:
             f.write(pickle.dumps(viterbi_parser))
 
-    if not os.path.isfile('shift_reduce_parser.pkl'):
-        filename = open('grammar.pkl', 'rb')
+    if not os.path.isfile('parsers/shift_reduce_parser.pkl'):
+        filename = open('parsers/grammar.pkl', 'rb')
         grammar = pickle.load(filename)
         shift_reduce_parser = ShiftReduceParser(grammar, trace=0)     # linear time
 
-        with open('shift_reduce_parser.pkl', 'wb') as f:
+        with open('parsers/shift_reduce_parser.pkl', 'wb') as f:
             f.write(pickle.dumps(shift_reduce_parser))
 
     with open('data/ptb.train.txt', 'r') as f:
         data = f.readlines()
 
-    #for sample in [1, 23, 20330, 20332, 443]:
+    if test:
+        for sample in [1, 23, 20330, 20332, 443]:
 
-    #    t1 = time.time()
-    #    viterbi_parser.parse_one(data[sample].split())
-    #    t2 = time.time()
-    #    print('viterbi      = {:.2f} sec for {} words'.format(
-    #        t2-t1, len(data[sample].split())))
+            t1 = time.time()
+            viterbi_parser.parse_one(data[sample].split())
+            t2 = time.time()
+            print('viterbi      = {:.2f} sec for {} words'.format(
+                t2-t1, len(data[sample].split())))
 
-    #    t1 = time.time()
-    #    shift_reduce_parser.parse_one(data[sample].split())
-    #    t2 = time.time()
-    #    print('shift reduce = {:.2f} sec for {} words'.format(
-    #        t2-t1, len(data[sample].split())))
+            t1 = time.time()
+            shift_reduce_parser.parse_one(data[sample].split())
+            t2 = time.time()
+            print('shift reduce = {:.2f} sec for {} words'.format(
+            t2-t1, len(data[sample].split())))
 
 
 if __name__ == '__main__':
