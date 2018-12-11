@@ -48,11 +48,16 @@ def get_parse(sentence, n_elems=15):
     else:
         sentence = sentence[:-1]
 
-    output = list(PARSER.parse(sentence))
+    try:
+        output = list(PARSER.parse(sentence))
+    except:
+        return(['null'])
+
+    # TODO: unclear if output=False is possible
     if output:
         return(output[0])
     else:
-        return([])
+        return(['null'])
 
 
 def get_parses(sentences):
@@ -84,7 +89,10 @@ def get_productions(productions):
 def find_tags_in_parse(phrase_tags, parses):
     tags = np.zeros((len(parses), len(phrase_tags)))
     for i, parse in enumerate(parses):
-        productions = get_productions(parse.productions())
+        try:
+            productions = get_productions(parse.productions())
+        except:
+            productions = ['null']
 
         for j, tag in enumerate(PHRASE_TAGS):
             if tag in productions:
@@ -194,8 +202,9 @@ def main(args):
         # get samples from the prior
         sample_sents, z = model.inference(n=args.num_samples)
         sample_sents, sample_tags = get_sents_and_tags(sample_sents, i2w, w2i)
-        pickle_it(sample_sents, 'samples/sents_sample.pkl')
-        pickle_it(sample_tags, 'samples/tags_sample.pkl')
+        pickle_it(z.cpu().numpy(), 'samples/z_sample_n{}.pkl'.format(args.num_samples))
+        pickle_it(sample_sents, 'samples/sents_sample_n{}.pkl'.format(args.num_samples))
+        pickle_it(sample_tags, 'samples/tags_sample_n{}.pkl'.format(args.num_samples))
         print(sample_sents, sep='\n')
 
         if args.constraint_mode:
@@ -204,6 +213,7 @@ def main(args):
             # get samples from the prior, conditioned via the actor
             all_tags_sample_prime = []
             all_sents_sample_prime = {}
+            all_z_sample_prime = {}
             for i, condition in enumerate(LABELS):
 
                 # binary vector denoting each of the PHRASE_TAGS
@@ -220,9 +230,10 @@ def main(args):
                 print(sample_sents_prime, sep='\n')
                 all_tags_sample_prime.append(sample_tags_prime)
                 all_sents_sample_prime[LABEL_NAMES[i]] = sample_sents_prime
-
-            pickle_it(all_tags_sample_prime, 'samples/tags_sample_prime.pkl')
-            pickle_it(all_sents_sample_prime, 'samples/sents_sample_prime.pkl')
+                all_z_sample_prime[LABEL_NAMES[i]] = z_prime.data.cpu().numpy()
+            pickle_it(all_tags_sample_prime, 'samples/tags_sample_prime_n{}.pkl'.format(args.num_samples))
+            pickle_it(all_sents_sample_prime, 'samples/sents_sample_prime_n{}.pkl'.format(args.num_samples))
+            pickle_it(all_z_sample_prime, 'samples/z_sample_prime_n{}.pkl'.format(args.num_samples))
 
     if args.interpolate:
         # get random samples from the latent space
@@ -233,14 +244,16 @@ def main(args):
         print('*** INTERP Z: ***')
         interp_sents, _ = model.inference(z=z)
         interp_sents, interp_tags = get_sents_and_tags(interp_sents, i2w, w2i)
-        pickle_it(interp_sents, 'samples/sents_interp.pkl')
-        pickle_it(interp_tags, 'samples/tags_interp.pkl')
+        pickle_it(z.cpu().numpy(), 'samples/z_interp_n{}.pkl'.format(args.num_samples))
+        pickle_it(interp_sents, 'samples/sents_interp_n{}.pkl'.format(args.num_samples))
+        pickle_it(interp_tags, 'samples/tags_interp_n{}.pkl'.format(args.num_samples))
         print(interp_sents, sep='\n')
 
         if args.constraint_mode:
             print('*** INTERP Z_PRIME: ***')
             all_tags_interp_prime = []
             all_sents_interp_prime = {}
+            all_z_interp_prime = {}
 
             for i, condition in enumerate(LABELS):
 
@@ -258,9 +271,11 @@ def main(args):
                 print(interp_sents_prime, sep='\n')
                 all_tags_interp_prime.append(interp_tags_prime)
                 all_sents_interp_prime[LABEL_NAMES[i]] = interp_sents_prime
+                all_z_interp_prime[LABEL_NAMES[i]] = z_prime.data.cpu().numpy()
 
-            pickle_it(all_tags_interp_prime, 'samples/tags_interp_prime.pkl')
-            pickle_it(all_sents_interp_prime, 'samples/sents_interp_prime.pkl')
+            pickle_it(all_tags_interp_prime, 'samples/tags_interp_prime_n{}.pkl'.format(args.num_samples))
+            pickle_it(all_sents_interp_prime, 'samples/sents_interp_prime_n{}.pkl'.format(args.num_samples))
+            pickle_it(all_z_interp_prime, 'samples/z_interp_prime_n{}.pkl'.format(args.num_samples))
 
     import IPython; IPython.embed()
 
