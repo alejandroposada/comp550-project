@@ -1,8 +1,6 @@
 from collections import defaultdict, Counter, OrderedDict
-from nltk import induce_pcfg
-from nltk import treetransforms
-from nltk.corpus import ptb
-from nltk.corpus import treebank
+from nltk import induce_pcfg, treetransforms
+from nltk.corpus import ptb, treebank
 from nltk.grammar import CFG, Nonterminal
 from nltk.parse import ShiftReduceParser
 from nltk.parse.viterbi import ViterbiParser
@@ -13,6 +11,10 @@ import time
 import torch
 import pickle
 
+
+# http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html
+PHRASE_TAGS = ['SBAR', 'PP', 'ADJP', 'QP', 'WHNP' , 'ADVP']
+
 class OrderedCounter(Counter, OrderedDict):
     'Counter that remembers the order elements are first encountered'
 
@@ -21,6 +23,11 @@ class OrderedCounter(Counter, OrderedDict):
 
     def __reduce__(self):
         return self.__class__, (OrderedDict(self),)
+
+
+def preprocess_nt(item):
+    """gives the base parse tag for a single nonterminal in a CFG"""
+    return(Nonterminal(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0]))
 
 
 def to_var(x, volatile=False):
