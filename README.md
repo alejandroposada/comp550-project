@@ -10,15 +10,15 @@ Conditional Generation from a Sentence Variational Autoencoder
 
 **scripts**
 
-+ `train.py` runs the model.
-    + `run_vae_train_jdv.sh`: `train.py` wrapper (jdv).
-+ `downloaddata.sh` downloads treebank.
++ `train_vae.py`: trains a VAE to build a continuous latent space out of sentences.
++ `train_ac.py`: trains an actor critic pair to apply the realism constraint on the VAE's latent space, as well as conditionally generate using the phrase-level parse tags defined in `utils.py`.
 + `make_parsers.py` makes `.pkl` files:
-    + `grammar.pkl`: a PCFG of the entire penn treebank parses
-    + `viterbi_parser.pkl`: a cubic-time parser trained on this grammar.
-    + `shift_reduce_parser.pkl`: a linear-time parser trained on this grammar.
-+ `inference.py`: generates samples from a saved-model's latent space.
-    + `print_interpolations.sh`: `inference.py` wrapper.
+    + `parsers/grammar.pkl`: a PCFG of the entire penn treebank parses
+    + `parsers/viterbi_parser.pkl`: a cubic-time parser trained on this grammar.
+    + `parsers/shift_reduce_parser.pkl`: a linear-time parser trained on this grammar.
++ `inference.py`: generates samples from a saved-model's latent space, optionally using conditional generation via the actor.
++ `data/download_data.sh` downloads treebank data.
++ `run_scripts.sh`: wrapper to run all experiments.
 
 **parser performance**
 
@@ -152,8 +152,60 @@ For obtaining samples and interpolating between senteces, inference.py can be us
 python3 inference.py -c $CHECKPOINT -n $NUM_SAMPLES
 ```
 
+Abstract / Introduction
+-----------------------
 
-**Code**
-+ https://colab.research.google.com/notebooks/latent_constraints/latentconstraints.ipynb#scrollTo=948GFxky-F7I
-+ https://github.com/cheonbok94/Pytorch-Latent-Constraints-Learning-to-Generate-Conditionally-from-Unconditional-Generative-Models
-+ https://github.com/timbmg/Sentence-VAE?fbclid=IwAR2G5O7Lf729Zu8od_AFKk-pDQQ5zc_v22BrwuIZxUZvVEKvCrQ3X6eWG18
+Previous work has shown that, using variational autoencoders (VAE), one can
+build a continuous latent space from which one can sample novel sentences. Other
+recent work has shown that, given a latent space trained in an unsupervised way,
+one can use an actor-critic approach to learn how to A) sharpen the
+representations in this latent space (i.e., improve their quality), and B)
+conditionally generate samples using categorical tags.
+
+In this work, we propose to incorperate phrase-level parse tags to generate
+sentences of a particular syntactic structure from a previously-trained VAE code
+layer. We believe that the incorperation of these parse tags will allow us to
+fine-tune the latent space such that it produces more syntactically-correct
+(and therefore, more grammatical) sentences.
+
+- [ ] 3-5 references of previous work. Include some stuff on efficient parsing
+      using large CFGs.
+- [ ] Novel contribution.
+
+
+Methods
+-------
+
+- [X] VAE construction, training (notes on KL-divergence annealing and word
+      dropout).
+- [X] Actor-critic construction.
+- [X] Dataset (Penn Treebank, full parse trees.)
+- [ ] Evaluation of realism (PCFGs / Parse Accuracy Measure)
+
+    -- sample from neihbourhood, show in continuity in phrase level information
+    -- evaluation should not be internal to the theory of the model -- BLEU
+    -- paraphrasing, sentence similarity -- BLEU
+
+
+Results
+-------
+
+- [ ] VAE training curves
+- [ ] Actor-critic results -- samples pre/post realism constraint, samples with
+      conditional generation.
+- [ ] Quantitative measures of sample quality. **SUGGESTIONS**
+
+
+Discussion
+----------
+
+- [ ] Conclusion
+- [ ] Limitations
+- [ ] Future work
+
+
+Contributions
+-------------
+
+This was a Posada & Viviano Joint.
+

@@ -36,9 +36,9 @@ class AC_Trainer:
 
         self.tensorboad_writer = SummaryWriter()
 
-        self.percentage_prior_fake = 0.1
+        self.percentage_prior_fake = 0.10
         self.N_between_update_G = 10
-        self.N_between_eval = 100
+        #self.N_between_eval = 100
 
     def train(self):
         for epoch in tqdm(range(self.start_epoch, self.num_epochs + 1)):
@@ -131,6 +131,7 @@ class AC_Trainer:
                 fake_z_prior.requires_grad = True
 
                 actor_g = self.actor(fake_z_prior, actor_labels)
+                real_g = self.actor(real_z, actor_labels)
                 zg_critic_out = self.real_critic(actor_g, actor_labels)
 
                 weight_var = torch.mean(logv, 0, True)  # TODO: might have to use sigma**2 instead of logv
@@ -139,14 +140,8 @@ class AC_Trainer:
                 dist_penalty = dist_penalty + torch.mean(
                     torch.sum((1 + (real_g - real_z).pow(2)).log() * weight_var.pow(-2), 1), 0)
 
-                real_g = self.actor(real_z, actor_labels)
                 zg_critic_real = self.real_critic(real_g, actor_labels)
-                actor_loss = F.binary_cross_entropy(
-                                 zg_critic_out, actor_truth, size_average=False) +
-                             F.binary_cross_entropy(
-                                 zg_critic_real, actor_truth, size_average=False) +
-                             dist_penalty
-
+                actor_loss = F.binary_cross_entropy(zg_critic_out, actor_truth, size_average=False) + F.binary_cross_entropy(zg_critic_real, actor_truth, size_average=False) + (0.1 * dist_penalty)
 
                 actor_loss.backward()
                 total_actor_loss += actor_loss.item()
@@ -156,9 +151,9 @@ class AC_Trainer:
                 if (actor_iteration % 100) == 0:
                     self.d_actor_histogram(self.iteration)
 
-        print("Distance penalty: {} , {} | Critic loss: {}".format(total_dist_penalty / actor_iteration,
-                                                                   total_actor_loss / actor_iteration,
-                                                                   total_real_loss / iteration))
+        print("Dist : {}\nActor: {}\nCrit : {}".format(total_dist_penalty / actor_iteration,
+                                                       total_actor_loss / actor_iteration,
+                                                       total_real_loss / iteration))
 
         self.summary_write(total_dist_penalty / actor_iteration, total_actor_loss / actor_iteration,
                            total_real_loss / iteration, epoch)

@@ -3,7 +3,7 @@ from multiprocessing import Pool
 from nltk.corpus import ptb, treebank
 from string import punctuation as PUNCTUATION
 from torch.utils.data import Dataset
-from utils import OrderedCounter
+from utils import OrderedCounter, PHRASE_TAGS
 import io
 import json
 import nltk
@@ -12,9 +12,6 @@ import os
 import sys
 import time
 import torch
-
-# http://www.surdeanu.info/mihai/teaching/ista555-fall13/readings/PennTreebankConstituents.html
-PHRASE_TAGS = ['SBAR', 'PP', 'ADJP', 'QP', 'WHNP' , 'ADVP']
 
 class PTB(Dataset):
 
