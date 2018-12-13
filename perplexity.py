@@ -122,7 +122,6 @@ def main(args):
         corpus = make_corpus(datasets[data_type])
         model = unigram(corpus)
 
-
         # compute and save perplexities
         f.write('{},all_z_prime,{:.2f}\n'.format(
             data_type, perplexity(samples_prime, model)))

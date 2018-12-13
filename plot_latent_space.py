@@ -34,7 +34,12 @@ def main(z, z_prime, name):
     data['names'] = names
 
     sns.scatterplot(
-        x=0, y=1, data=data, hue='names', alpha=1, palette="cubehelix")
+        x=0, y=1, data=data, hue='names', alpha=1, palette="tab10")
+
+    # zoom
+    if name == 'sample':
+        plt.xlim([-0.75, 0.75])
+        plt.ylim([-0.75, 0.75])
 
     plt.savefig('figs/latent_{}.png'.format(name))
     plt.savefig('figs/latent_{}.svg'.format(name))
