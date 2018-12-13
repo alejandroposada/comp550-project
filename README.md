@@ -1,6 +1,15 @@
 Conditional Generation from a Sentence Variational Autoencoder
 --------------------------------------------------------------
 
+#TODO
+- [ ] Cool plot (J)
+- [ ] Samples: interpolations (J)
+- [ ] Samples: effect of the attribute constraint (J)
+- [ ] Introduction (A)
+- [ ] Results (A: don't forget per tag perplexity)
+- [ ] Discussion-conclusion (A-J)
+
+
 **based on**
 
 + [Generating Sentences from a Continuous Space Bowman et al 2015](https://arxiv.org/abs/1511.06349)
