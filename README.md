@@ -5,7 +5,7 @@ Conditional Generation from a Sentence Variational Autoencoder
 - [X] latent interpolation trajectory plot
 - [X] perplexities for train / test in `results/`
 - [X] samples: interpolations (J)
-- [ ] samples: effect of the attribute constraint (J)
+- [X] samples: effect of the attribute constraint (J)
 - [ ] Introduction (A)
 - [ ] Results (A: don't forget per tag perplexity)
 - [ ] Discussion-conclusion (A-J)
