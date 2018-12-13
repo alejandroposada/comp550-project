@@ -25,6 +25,18 @@ class OrderedCounter(Counter, OrderedDict):
         return self.__class__, (OrderedDict(self),)
 
 
+def pickle_it(data, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def load_pickle(filename):
+    with open(filename, 'rb') as f:
+        return(pickle.loads(f.read()))
+
+
+
+
 def preprocess_nt(item):
     """gives the base parse tag for a single nonterminal in a CFG"""
     return(Nonterminal(item.unicode_repr().split('-')[0].split('|')[0].split('+')[0].split('=')[0]))

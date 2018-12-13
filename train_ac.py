@@ -63,7 +63,7 @@ if __name__ == '__main__':
                                 pin_memory=torch.cuda.is_available()
                                 )
 
-    num_tags = len(datasets['train'][0]['phrase_tags'])      # 5
+    num_tags = len(datasets['train'][0]['phrase_tags'])      # 6
 
     # Load trained VAE
     vae_model = SentenceVAE(
