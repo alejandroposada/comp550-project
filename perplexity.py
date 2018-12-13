@@ -27,7 +27,7 @@ def sentence_prob(sentence, model):
 # here you construct the unigram language model
 def unigram(tokens):
     stops = ['<', '>']
-    model = collections.defaultdict(lambda: 0.001)
+    model = collections.defaultdict(lambda: 0.01)
     for f in tokens:
         if f in stops:
             continue
