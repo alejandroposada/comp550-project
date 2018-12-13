@@ -17,6 +17,9 @@ Conditional Generation from a Sentence Variational Autoencoder
     + `parsers/viterbi_parser.pkl`: a cubic-time parser trained on this grammar.
     + `parsers/shift_reduce_parser.pkl`: a linear-time parser trained on this grammar.
 + `inference.py`: generates samples from a saved-model's latent space, optionally using conditional generation via the actor.
++ `print_samples.py`: prints saves samples, and does chi-square tests.
++ `plot_latent_space.py`: plots interpolation trajectory of z and z_prime. 
++ `perplexity.py`: calculates perplexity of samples using the training and test corpus.
 + `data/download_data.sh` downloads treebank data.
 + `run_scripts.sh`: wrapper to run all experiments.
 
