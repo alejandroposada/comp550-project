@@ -43,3 +43,4 @@ def main(z, z_prime, name):
 if __name__ == '__main__':
     main('samples/z_interp_n250.pkl', 'samples/z_interp_prime_n250.pkl', 'interp')
     main('samples/z_sample_n250.pkl', 'samples/z_sample_prime_n250.pkl', 'sample')
+
