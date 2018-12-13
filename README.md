@@ -2,7 +2,7 @@ Conditional Generation from a Sentence Variational Autoencoder
 --------------------------------------------------------------
 
 #TODO
-- [ ] Cool plot (J)
+- [X] Cool plot (J)
 - [ ] Samples: interpolations (J)
 - [ ] Samples: effect of the attribute constraint (J)
 - [ ] Introduction (A)
