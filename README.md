@@ -5,10 +5,9 @@ Conditional Generation from a Sentence Variational Autoencoder
 - [ ] Cool plot
 - [ ] Samples: interpolations
 - [ ] Samples: effect of the attribute constraint
-- [ ] Metric: how many sentences get “converted”
-- [ ] Introduction
-- [ ] Results
-- [ ] Discussion-conclusion
+- [ ] Introduction (A)
+- [ ] Results (A: don't forget per tag perplexity)
+- [ ] Discussion-conclusion (A-J)r
 
 
 **based on**
