@@ -6,7 +6,7 @@ Conditional Generation from a Sentence Variational Autoencoder
 - [X] perplexities for train / test in `results/`
 - [X] samples: interpolations (J)
 - [X] samples: effect of the attribute constraint (J)
-- [ ] Introduction (A)
+- [X] Introduction (A)
 - [ ] Results (A: don't forget per tag perplexity)
 - [ ] Discussion-conclusion (A-J)
 
