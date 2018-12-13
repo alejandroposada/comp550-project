@@ -37,6 +37,9 @@ def main(args):
             min_occ=args.min_occ
         )
 
+    import IPython; IPython.embed()
+    sys.exit()
+
     model = SentenceVAE(
         vocab_size=datasets['train'].vocab_size,
         sos_idx=datasets['train'].sos_idx,

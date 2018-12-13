@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from model import SentenceVAE, Actor
-from utils import to_var, idx2word, interpolate, preprocess_nt, PHRASE_TAGS
+from utils import to_var, idx2word, interpolate, preprocess_nt, PHRASE_TAGS, pickle_it, load_pickle
 import argparse
 import json
 import numpy as np
@@ -28,16 +28,6 @@ LABELS = [
 
 LABEL_NAMES = ['NONE']
 LABEL_NAMES.extend(PHRASE_TAGS)
-
-
-def pickle_it(data, filename):
-    with open(filename, 'wb') as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def load_pickle(filename):
-    with open(filename, 'rb') as f:
-        return(pickle.loads(f.read()))
 
 
 def get_parse(sentence, n_elems=15):
