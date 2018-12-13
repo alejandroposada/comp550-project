@@ -2,9 +2,10 @@ Conditional Generation from a Sentence Variational Autoencoder
 --------------------------------------------------------------
 
 #TODO
-- [X] Cool plot (J)
-- [ ] Samples: interpolations (J)
-- [ ] Samples: effect of the attribute constraint (J)
+- [X] latent interpolation trajectory plot
+- [X] perplexities for train / test in `results/`
+- [ ] samples: interpolations (J)
+- [ ] samples: effect of the attribute constraint (J)
 - [ ] Introduction (A)
 - [ ] Results (A: don't forget per tag perplexity)
 - [ ] Discussion-conclusion (A-J)
