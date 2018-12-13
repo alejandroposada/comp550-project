@@ -1,6 +1,16 @@
 Conditional Generation from a Sentence Variational Autoencoder
 --------------------------------------------------------------
 
+#TODO
+- [ ] Cool plot
+- [ ] Samples: interpolations
+- [ ] Samples: effect of the attribute constraint
+- [ ] Metric: how many sentences get “converted”
+- [ ] Introduction
+- [ ] Results
+- [ ] Discussion-conclusion
+
+
 **based on**
 
 + [Generating Sentences from a Continuous Space Bowman et al 2015](https://arxiv.org/abs/1511.06349)
