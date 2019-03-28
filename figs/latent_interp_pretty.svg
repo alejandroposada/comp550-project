@@ -17,7 +17,7 @@
    id="svg8543"
    sodipodi:docname="latent_interp_pretty.svg"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   inkscape:export-filename="/home/jdv/code/comp550-project/figs/latent_interp_pretty.svg.png"
+   inkscape:export-filename="/home/jdv/code/comp550-project/figs/latent_interp_pretty.png"
    inkscape:export-xdpi="99.385101"
    inkscape:export-ydpi="99.385101">
   <metadata
@@ -28,7 +28,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -51,7 +51,7 @@
      fit-margin-bottom="0"
      fit-margin-left="0"
      inkscape:zoom="1.4142135"
-     inkscape:cx="556.70001"
+     inkscape:cx="434.37053"
      inkscape:cy="239.39829"
      inkscape:window-x="67"
      inkscape:window-y="27"
